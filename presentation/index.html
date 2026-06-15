@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>认知语义学视角下具身智能基座模型近同义动词区分能力初探</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<style>
+:root {
+  --blue: #003D6B;
+  --blue-light: #1E6BA8;
+  --sky: #4A9FD9;
+  --sky-light: #7EC8E3;
+  --bg: #FAFBFC;
+  --bg-card: #FFF;
+  --text: #1A1A2E;
+  --text-dim: #4A5568;
+  --text-muted: #718096;
+  --red: #E53E3E;
+  --green: #38A169;
+  --border: rgba(0,61,107,.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Noto Sans SC', 'Noto Serif SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Animations ===== */
+.f-in { opacity:0; transform:translateY(40px); transition: opacity .8s ease, transform .8s ease; }
+.f-in.visible { opacity:1; transform:translateY(0); }
+.f-left { opacity:0; transform:translateX(-50px); transition: opacity .8s ease, transform .8s ease; }
+.f-left.visible { opacity:1; transform:translateX(0); }
+.f-right { opacity:0; transform:translateX(50px); transition: opacity .8s ease, transform .8s ease; }
+.f-right.visible { opacity:1; transform:translateX(0); }
+.s-in { opacity:0; transform:scale(.9); transition: opacity .8s ease, transform .8s ease; }
+.s-in.visible { opacity:1; transform:scale(1); }
+
+/* ===== Progress ===== */
+#progressBar { position:fixed; top:0; left:0; height:3px; z-index:1000;
+  background:linear-gradient(90deg,var(--blue),var(--sky-light)); transition:width .1s linear; }
+
+/* ===== Nav dots ===== */
+#navDots { position:fixed; right:18px; top:50%; transform:translateY(-50%);
+  z-index:1000; display:flex; flex-direction:column; gap:10px; }
+.n-dot { width:9px; height:9px; border-radius:50%;
+  border:1.5px solid rgba(0,61,107,.3); background:transparent;
+  cursor:pointer; transition:all .3s; }
+.n-dot:hover, .n-dot.on { background:var(--blue); border-color:var(--blue); transform:scale(1.4); }
+
+.g-line { width:50px; height:3px; background:linear-gradient(90deg,var(--blue),transparent); margin:.6rem auto; }
+
+/* ===== Hero ===== */
+.hero {
+  min-height:100vh; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; text-align:center;
+  padding:2rem; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,#003D6B 0%,#1E6BA8 50%,#4A9FD9 100%);
+}
+.hero::before { content:''; position:absolute; inset:-50%;
+  background:radial-gradient(ellipse at center,rgba(255,255,255,.08) 0%,transparent 60%);
+  animation:glow 8s ease-in-out infinite alternate; }
+@keyframes glow { 0%{transform:translate(-10%,-10%)} 100%{transform:translate(10%,10%)} }
+
+.hero h1 {
+  font-family:'Noto Serif SC',serif; font-size:clamp(1.5rem,3.5vw,2.8rem);
+  font-weight:900; line-height:1.4; max-width:900px; position:relative; z-index:1;
+  text-shadow:0 0 60px rgba(255,255,255,.2);
+}
+.hero .sub { font-size:clamp(.9rem,1.6vw,1.2rem); color:var(--sky-light);
+  margin-top:.6rem; font-weight:300; position:relative; z-index:1; }
+.hero .auth { font-size:.85rem; color:rgba(255,255,255,.8); margin-top:2.5rem; position:relative; z-index:1; }
+.scroll-hint { position:absolute; bottom:2rem; left:50%; transform:translateX(-50%);
+  color:var(--sky-light); font-size:.75rem; z-index:1; animation:bounce 2s infinite; }
+.scroll-hint::after { content:'↓'; display:block; text-align:center; font-size:1.1rem; margin-top:.2rem; }
+@keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(8px)} }
+
+/* ===== Sections ===== */
+.sec { padding:5rem 2rem; max-width:1080px; margin:0 auto; }
+.sec > * { max-width:1080px; }
+.sec-t { font-family:'Noto Serif SC',serif; font-size:clamp(1.3rem,2.6vw,1.9rem);
+  font-weight:900; text-align:center; margin-bottom:.3rem; }
+.sec-d { text-align:center; color:var(--text-dim); max-width:720px; margin:0 auto 2rem; font-size:.88rem; line-height:1.8; }
+.chap { font-size:.68rem; color:var(--blue); letter-spacing:.3em;
+  text-transform:uppercase; text-align:center; margin-bottom:.4rem; font-weight:600; }
+
+.divider { width:100%; height:1px; max-width:500px; margin:0 auto;
+  background:linear-gradient(90deg,transparent,rgba(0,61,107,.2),transparent); }
+
+/* ===== Lead text ===== */
+.lead { font-size:.92rem; color:var(--text-dim); max-width:800px; margin:0 auto; line-height:2; text-align:center; }
+
+/* ===== Image Sections ===== */
+.img-full { position:relative; width:100%; overflow:hidden; }
+.img-full img { width:100%; height:60vh; min-height:400px; object-fit:cover; display:block;
+  filter:brightness(.5) saturate(.75); }
+.img-full img.err { display:none; }
+.img-full .bg { position:absolute; inset:0; display:none;
+  background:linear-gradient(135deg,#111 0%,rgba(212,168,67,.15) 50%,#111 100%); }
+.img-full img.err + .bg { display:block; }
+.img-full .ov { position:absolute; inset:0; display:flex; flex-direction:column;
+  justify-content:center; padding:4rem 3rem;
+  background:linear-gradient(180deg,rgba(255,255,255,.1) 0%,rgba(0,61,107,.7) 100%); }
+.img-full .ov h2 { font-family:'Noto Serif SC',serif; font-size:clamp(1.3rem,2.8vw,2rem);
+  font-weight:900; max-width:650px; line-height:1.4; }
+.img-full .ov p { max-width:520px; color:var(--text-dim); font-size:.85rem;
+  line-height:1.9; margin-top:.6rem; }
+
+/* ===== Grids ===== */
+.g3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.4rem; max-width:1000px; margin:0 auto; }
+.g2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:2rem; max-width:1000px; margin:0 auto; }
+
+.card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:12px; padding:1.6rem; transition:all .35s ease;
+}
+.card:hover { border-color:var(--blue); transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,61,107,.08); }
+.card h3 { color:var(--blue); font-size:1.05rem; margin-bottom:.6rem; font-family:'Noto Serif SC',serif; }
+.card p { font-size:.82rem; color:var(--text-dim); line-height:1.8; }
+.card ul { list-style:none; padding:0; }
+.card ul li { font-size:.82rem; color:var(--text-dim); padding:.35rem 0 .35rem 1.2rem; position:relative; line-height:1.7;
+  border-bottom:1px solid rgba(0,61,107,.04); }
+.card ul li::before { content:'◆'; color:var(--blue); font-size:.45rem; position:absolute; left:0; top:.55rem; }
+
+/* ===== Text blocks ===== */
+.txt { font-size:.84rem; color:var(--text-dim); line-height:1.9; }
+.txt p { margin-bottom:.6rem; }
+.txt strong { color:var(--text); }
+
+/* ===== Stat list ===== */
+.sl { list-style:none; padding:0; }
+.sl li { font-size:.82rem; color:var(--text-dim); padding:.5rem 0 .5rem 1.5rem; position:relative; line-height:1.7; }
+.sl li::before { content:'▹'; color:var(--blue); position:absolute; left:0; font-size:1rem; }
+
+/* ===== Tags ===== */
+.tags span { display:inline-block; background:rgba(0,61,107,.06); border:1px solid var(--border);
+  border-radius:18px; padding:.15rem .65rem; margin:.2rem; font-size:.72rem; color:var(--text-dim); }
+
+/* ===== Tables ===== */
+.tw { max-width:100%; margin:0 auto; overflow-x:auto; }
+.dt { width:100%; border-collapse:collapse; font-size:.68rem; white-space:nowrap; }
+.dt th { background:rgba(0,61,107,.08); color:var(--blue); padding:.5rem .6rem; border:1px solid var(--border); font-weight:600; }
+.dt td { padding:.4rem .5rem; border:1px solid rgba(0,61,107,.06); color:var(--text-dim); text-align:center; }
+.dt tr:hover td { background:rgba(0,61,107,.03); }
+.dt .x { color:var(--red); font-weight:700; }
+.dt .ok { color:var(--green); }
+.shr td { background:rgba(0,61,107,.08)!important; color:var(--blue)!important; font-weight:700!important; text-align:center!important; font-size:.78rem!important; }
+
+/* ===== Dimension cards ===== */
+.dim5 { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:.9rem; max-width:1000px; margin:0 auto; }
+.dc { background:linear-gradient(180deg,rgba(0,61,107,.04),rgba(255,255,255,.8));
+  border:1px solid var(--border); border-radius:10px; padding:1.3rem .8rem; text-align:center; transition:all .3s; }
+.dc:hover { border-color:var(--blue); transform:translateY(-2px); }
+.dc h5 { color:var(--blue); font-size:.88rem; margin-bottom:.4rem; }
+.dc p { font-size:.72rem; color:var(--text-dim); line-height:1.5; }
+
+/* ===== Scenario 4 ===== */
+.s4 { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1.2rem; max-width:1000px; margin:0 auto; }
+.si { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:1.4rem; transition:all .3s; }
+.si:hover { border-color:var(--blue); }
+.si .n { display:inline-block; width:26px; height:26px; line-height:26px; text-align:center;
+  background:rgba(0,61,107,.08); border-radius:50%; font-size:.75rem; color:var(--blue); font-weight:700; margin-bottom:.5rem; }
+.si h5 { color:var(--blue); font-size:.88rem; margin-bottom:.3rem; }
+.si p { font-size:.74rem; color:var(--text-dim); line-height:1.6; }
+
+/* ===== Formula ===== */
+.fb { background:rgba(0,61,107,.03); border:1px solid var(--border); border-radius:10px;
+  padding:1.2rem; max-width:500px; margin:.8rem auto; text-align:center;
+  font-family:'JetBrains Mono',monospace; font-size:.88rem; color:var(--blue); line-height:1.8; }
+.fb .lb { font-family:'Noto Sans SC',sans-serif; font-size:.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.4rem; }
+
+/* ===== Counter ===== */
+.ctr { font-size:2.2rem; font-weight:900; color:var(--blue); font-family:'JetBrains Mono',monospace; }
+.ctr-l { font-size:.72rem; color:var(--text-muted); margin-top:.2rem; }
+.ctr-row { display:flex; justify-content:center; gap:2.5rem; flex-wrap:wrap; margin:1.5rem 0; }
+.ctr-i { text-align:center; }
+
+/* ===== Chart ===== */
+.cw { max-width:780px; margin:1.5rem auto; display:flex; justify-content:center; }
+.cw svg { max-width:100%; height:auto; }
+
+/* ===== Triangle ===== */
+.tri { max-width:680px; margin:1.5rem auto; }
+
+/* ===== Quote ===== */
+.qb { border-left:3px solid var(--blue); padding:1rem 1.4rem; max-width:780px; margin:1.2rem auto;
+  font-style:italic; color:var(--text-dim); line-height:1.9; background:rgba(0,61,107,.03);
+  border-radius:0 8px 8px 0; font-size:.84rem; }
+
+/* ===== Highlight ===== */
+.rd { color:var(--red); font-weight:700; }
+.gl { color:var(--blue); font-weight:700; }
+
+/* ===== Gap boxes ===== */
+.gap-box { border-radius:12px; padding:1.5rem; }
+.gap-box h4 { font-size:.95rem; margin-bottom:.4rem; }
+.gap-box p { font-size:.82rem; line-height:1.8; }
+
+/* ===== Footer ===== */
+.footer { min-height:70vh; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; text-align:center; padding:3rem; }
+.footer h2 { font-family:'Noto Serif SC',serif; font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:900; color:var(--blue); }
+.footer .qa { font-size:1.3rem; color:var(--text-dim); margin-top:.4rem; }
+.footer .fi { font-size:.85rem; color:var(--text-muted); margin-top:2rem; }
+
+@media(max-width:768px) {
+  #navDots { display:none; }
+  .sec { padding:3rem 1rem; }
+  .g3, .g2 { grid-template-columns:1fr; }
+  .dim5 { grid-template-columns:repeat(2,1fr); }
+  .s4 { grid-template-columns:1fr 1fr; }
+  .img-full img { height:45vh; min-height:300px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 上外校标 -->
+<div id="sisu-logo" style="position:fixed;top:20px;left:20px;z-index:1001;">
+  <img src="SISU.png" alt="上外校标" style="height:60px;width:auto;">
+</div>
+
+<div id="progressBar"></div>
+<nav id="navDots">
+  <div class="n-dot" data-target="hero"></div>
+  <div class="n-dot" data-target="sec-intro"></div>
+  <div class="n-dot" data-target="sec-bg"></div>
+  <div class="n-dot" data-target="sec-gap"></div>
+  <div class="n-dot" data-target="img-scene"></div>
+  <div class="n-dot" data-target="sec-significance"></div>
+  <div class="n-dot" data-target="img-brain"></div>
+  <div class="n-dot" data-target="sec-theory"></div>
+  <div class="n-dot" data-target="sec-rq"></div>
+  <div class="n-dot" data-target="sec-method"></div>
+  <div class="n-dot" data-target="img-robot"></div>
+  <div class="n-dot" data-target="sec-results"></div>
+  <div class="n-dot" data-target="sec-discuss"></div>
+  <div class="n-dot" data-target="sec-limitations"></div>
+  <div class="n-dot" data-target="end"></div>
+</nav>
+
+<!-- ==================== HERO ==================== -->
+<section class="hero" id="hero">
+  <h1>认知语义学视角下具身智能基座模型<br>近同义动词区分能力初探</h1>
+  <div class="sub">—— 以"扔"类动词为例</div>
+  <div class="auth">熊羿成 上海外国语大学 &nbsp;|&nbsp; 李檬希 西南大学</div>
+  <div class="scroll-hint">向下滚动</div>
+</section>
+
+<!-- ==================== 引言 ==================== -->
+<section class="sec" id="sec-intro" style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;">
+  <div class="chap f-in">Introduction</div>
+  <h2 class="sec-t f-in">引言</h2>
+  <div class="g-line f-in"></div>
+  
+  <div class="txt f-in" style="max-width:800px;margin:0 auto 2rem;">
+    <p style="font-size:1rem;line-height:2.2;text-align:center;color:var(--text);">
+      本研究关注的核心问题是：当前具身模型在<strong class="gl">精细肢体动作动词区分和表征层面</strong>与人类是否对齐？
+    </p>
+    <p style="margin-top:1.5rem;text-align:center;">
+      具身智能模型近年来发展迅速，相关模型、测评层出不穷，但现有研究对人机交互——尤其是机器与人类在<strong>精细动词理解层面</strong>的对齐能力——考察较少。
+    </p>
+  </div>
+
+  <div class="g3" style="margin-bottom:2rem;">
+    <div class="card f-left" style="transition-delay:.1s;border-left:3px solid var(--blue);">
+      <h3>RQ1：结构化表征</h3>
+      <p>模型是否具备区分动词的结构化表征能力？</p>
+    </div>
+    <div class="card f-left" style="transition-delay:.2s;border-left:3px solid var(--green);">
+      <h3>RQ2：人类一致性</h3>
+      <p>模型表征结构与人类认知结构的一致性如何？</p>
+    </div>
+  </div>
+
+  <div class="card f-in" style="max-width:800px;margin:0 auto;border-left:3px solid #FF6B20;">
+    <h3>RQ3：模型类型对表征能力的影响</h3>
+    <p>模型的表征结构是否随模型类型（LLM/VLM/VLA）变化而系统变化？比较不同类型模型在动词区分能力、人类结构一致性方面的差异，观察能力随多模态与具身信息增强的趋势。</p>
+  </div>
+
+  <div class="txt f-in" style="max-width:800px;margin:2rem auto 0;">
+    <p style="text-align:center;color:var(--text-dim);">
+      基于上述问题，本研究结合大语言模型测评中的<strong>OOD分析</strong>与<strong>LLM-as-participant</strong>方法论，<br>
+      使用 Gao (2016) 成熟的 throw-verb 研究结论作为基线，对具身智能模型开展系统测评。
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 一、研究背景 ==================== -->
+<section class="sec" id="sec-bg">
+  <div class="chap f-in">Chapter I</div>
+  <h2 class="sec-t f-in">一、研究背景</h2>
+  <div class="g-line f-in"></div>
+
+  <!-- 模型页 -->
+  <p class="sec-d f-in">具身智能正处于从语义规划向端到端动作生成的范式跃迁中</p>
+
+  <div class="txt f-in" style="max-width:800px;margin:0 auto 2rem;">
+    <p>根据 Pfeifer & Bongard（2006）的定义，<strong>具身智能是智能体通过物理实体与其所处真实环境进行持续交互而涌现出的智能</strong>。其中，视觉-语言-动作模型（VLA）是近年来最具代表性的研究方向，被认为是通往AGI的有希望路径。</p>
+  </div>
+
+  <div class="g3" style="margin-bottom:3rem;">
+    <div class="card f-left" style="transition-delay:.1s">
+      <h3>VLM 模型类型</h3>
+      <ul>
+        <li><strong>Text↔Image</strong>：QwenVL (Wang et al., 2024)、InternVL (Chen et al., 2024) 等多模态模型</li>
+        <li><strong>Any2Any</strong>：Bagel (Zeng et al., 2025)，文生图/图文互生</li>
+        <li><strong>VLA</strong>：HYembodied (Tencent, 2026)、Open-Pi，用于机械臂操作/无人驾驶</li>
+      </ul>
+    </div>
+    <div class="card f-left" style="transition-delay:.2s">
+      <h3>技术演进</h3>
+      <ul>
+        <li>RT-2 范式：运动轨迹数据与视觉语言联合训练 (Brohan et al., 2023)</li>
+        <li>流匹配动作生成 (Flow Matching, Black et al., 2024)</li>
+        <li>混合变换器架构 (HYembodied, 2026)</li>
+        <li>触觉感知引入 (AnyTouch, UniTouch)</li>
+      </ul>
+    </div>
+    <div class="card f-left" style="transition-delay:.3s">
+      <h3>VLA 技术架构</h3>
+      <ul>
+        <li>基于VLM基座，统一token空间联合训练</li>
+        <li>动作学习：遥操作 + 视频-轨迹学习</li>
+        <li>代表模型：HY-embodied, Mimo-embodied, ROBO-BRAIN</li>
+        <li>部分模型引入触觉感知增强</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 测评页 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:.5rem;">现有 VLA 测评研究进展</h4>
+  <div class="txt f-in" style="max-width:800px;margin:0 auto 1.5rem;">
+    <p>2024-2025 年间涌现出大量 VLA 测评研究，主要集中于两个方向：<strong>动作执行与安全性预测</strong>。RoboVQA (2024) 最早关注高层推理和语义理解，VLABench (2024) 考察隐含意图理解，RoboBench (2025) 将 MLLM 视为"系统 2"提出指令理解、感知推理、泛化规划等维度。这些工作初步考量了面向语言指令的宏观规划能力，但仍局限于高层任务层面。</p>
+    <p style="margin-top:.8rem;">同时，测评方法论也在演进：从早期人类打标签，发展出<strong>OOD分析、结构相似性分析、LLM-as-judge、LLM-as-participant</strong>等新范式。其中LLM-as-participant在价值观模拟、心理疾病预测等领域有广泛运用，适用于元认知测量且可解释性强。</p>
+  </div>
+
+  <div class="tw f-in" style="margin-bottom:1.5rem;">
+    <table class="dt" id="tbl1">
+      <thead>
+        <tr>
+          <th>测试名称</th>
+          <th>意图理解</th>
+          <th>感知推理</th>
+          <th style="color:var(--red)">动作语义分析</th>
+          <th>形式逻辑</th>
+          <th>视觉感知</th>
+          <th>任务拆分与重述</th>
+          <th>跨硬件</th>
+          <th>评价指标</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <p class="f-in" style="text-align:center;font-size:.78rem;color:var(--text-muted);margin-bottom:1.5rem;">
+    14 个测评中仅 3 个考察指令理解，<strong style="color:var(--red)">无一考察动作语义分析</strong>
+  </p>
+
+  <!-- 局限页 -->
+  <h4 class="f-in rd" style="font-size:1rem;text-align:center;margin-bottom:1rem;">研究缺口：现有测评的两大局限</h4>
+
+  <div class="g2" style="margin-top:1rem;">
+    <div class="gap-box f-left" style="background:rgba(255,68,68,.04);border:1px solid rgba(255,68,68,.12);">
+      <h4 class="rd">局限一：细粒度动词语义完全未被考量</h4>
+      <p>对大语言模型的动词语义辨别能力完全没有被考量。这一能力在安全敏感性场景下十分重要，同时导致了人机协同和人机一致性测评的缺乏。</p>
+    </div>
+    <div class="gap-box f-right" style="background:rgba(255,68,68,.04);border:1px solid rgba(255,68,68,.12);">
+      <h4 class="rd">局限二：静态任务与结果导向</h4>
+      <p>测评大多是<span class="rd">静态任务</span>与<span class="rd">结果导向</span>——要求 LLM 执行预设任务后根据人类打分/LLM打分/成功率判断。无法解析和测量模型对动作过程的概念理解，可解释性不足。</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 二、研究缺口与意义 ==================== -->
+<section class="sec" id="sec-gap">
+  <div class="chap f-in">Chapter II</div>
+  <h2 class="sec-t f-in">二、研究缺口与意义</h2>
+  <div class="g-line f-in"></div>
+
+  <!-- 人机交互的重要性被忽视 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">人机交互很重要，但被忽视了</h4>
+
+  <div class="txt f-in" style="max-width:800px;margin:0 auto 2rem;">
+    <p>交互式任务中对自然语言指令的错误理解是主要的物理安全隐患（Xing et al., 2025）。在部分对安全性和人机交互有着高要求的场合，这样的问题会进一步被放大。</p>
+    <p>人机交互被忽视会导致<strong>两个问题</strong>：</p>
+  </div>
+
+  <div class="g2">
+    <div class="gap-box f-left" style="background:rgba(255,68,68,.04);border:1px solid rgba(255,68,68,.12);">
+      <h4 class="rd">问题一：细粒度语义理解的认知鸿沟</h4>
+      <p>若具身智能模型无法理解动词的具身性，其也就难以真正理解人类语言，严重影响人机交互场景下的表现、工作效率和安全性问题。当前具身性的匮乏，本质上是细粒度动作语义的缺失，并会导致人机交互的失败。</p>
+    </div>
+    <div class="gap-box f-right" style="background:rgba(255,68,68,.04);border:1px solid rgba(255,68,68,.12);">
+      <h4 class="rd">问题二：安全性与人机一致性的空白</h4>
+      <p>针对具身智能系统的安全性，学界现主要关注动作执行与安全性预测、安全原则对齐、抗攻击能力等角度，尚未关注到人机交互过程中的断层隐患。时下对具身模型的训练与评测依赖于封闭的训练集和固定的指令，在人机交互方面留有空白。</p>
+    </div>
+  </div>
+
+  <div class="f-in" style="text-align:center;margin-top:2rem;max-width:800px;margin-left:auto;margin-right:auto;">
+    <h4 class="rd" style="font-size:.95rem;margin-bottom:.8rem;">现有研究的局限</h4>
+    <div class="g2" style="margin-top:0;">
+      <div class="card" style="border-color:rgba(255,68,68,.12);">
+        <h3 style="color:var(--red)">局限一：细粒度动词语义完全未被考量</h3>
+        <p>对大语言模型的动词语义辨别能力完全没有被考量。这一能力在安全敏感性场景下十分重要，同时导致了人机协同和人机一致性测评的缺乏。</p>
+      </div>
+      <div class="card" style="border-color:rgba(255,68,68,.12);">
+        <h3 style="color:var(--red)">局限二：静态任务与结果导向</h3>
+        <p>测评大多是<span class="rd">静态任务</span>与<span class="rd">结果导向</span>——要求 LLM 执行预设任务后根据人类打分/LLM打分/成功率判断。无法解析和测量模型对动作过程的概念理解，可解释性不足。</p>
+      </div>
+    </div>
+    <p class="txt" style="font-size:.82rem;margin-top:1.5rem;">
+      RoboVQA (2023)、VLABench (2024)、RoboBench (2025) 分别针对会话隐含意图、环境场景、指令下的长任务规划理解进行测评，弥补了只重视结果、忽略人机交互的问题。<br>
+      <span class="gl">但针对动词细粒度的语义认知仍然非常局限。</span>
+    </p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== IMAGE 1: Construction ==================== -->
+<section class="img-full" id="img-scene">
+  <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1600&q=80" alt="建筑工地" loading="lazy" onerror="this.classList.add('err')">
+  <div class="bg"></div>
+  <div class="ov">
+    <h2 class="f-left">工地场景</h2>
+    <p class="f-right">安全要求高，动作必须精细。地形复杂，视觉受粉尘阻碍，噪音大，网络差。对动词的具身认知和本体感觉对动作的完整执行格外重要。</p>
+  </div>
+</section>
+
+<!-- ==================== IMAGE 2: Elderly Care ==================== -->
+<section class="img-full">
+  <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=1600&q=80" alt="养老看护" loading="lazy" onerror="this.classList.add('err')">
+  <div class="bg"></div>
+  <div class="ov">
+    <h2 class="f-left">"搀" 与 "扶" 的安全差异</h2>
+    <p class="f-right">"搀" = 外部向上持续垂直力；"扶" = 多向水平阻尼力。运动轨迹基本一致，但力学模式截然不同。仅靠轨迹学习将导致老人摔倒等安全事故。</p>
+  </div>
+</section>
+
+<!-- ==================== Intelligence Level Chart ==================== -->
+<section class="sec" style="padding-top:3rem;padding-bottom:3rem;">
+  <p class="sec-d f-in" style="margin-bottom:1.5rem;">
+    Long et al. (2025) 五级机器人智能框架："是否具备人类语言的基本理解能力"是区分基础服务机器人与通用服务机器人的重要判定标准
+  </p>
+  <div class="cw f-in" id="lvl-chart"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 实验结果 ==================== -->
+<section class="sec" id="sec-analysis">
+  <div class="chap f-in">Results & Analysis</div>
+  <h2 class="sec-t f-in">实验结果与分析</h2>
+  <div class="g-line f-in"></div>
+  <p class="sec-d f-in">基于"扔"类动词编码任务的6个模型与人类基线对比分析</p>
+
+  <!-- 指标定义 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">指标定义与公式</h4>
+  
+  <div class="g2" style="margin-bottom:1.5rem;">
+    <div class="f-left">
+      <div class="card">
+        <h3>RSA（表征相似性分析）</h3>
+        <div class="fb" style="max-width:100%;">
+          <div class="lb">Representation Similarity Analysis</div>
+          RSA(X, Y) = Spearman(vec(D<sub>X</sub>), vec(D<sub>Y</sub>))
+        </div>
+        <p style="font-size:.78rem;color:var(--text-dim);margin-top:.5rem;">衡量两个表征空间的相似性结构</p>
+      </div>
+    </div>
+    <div class="f-right">
+      <div class="card">
+        <h3>CKA（中心核对齐）</h3>
+        <div class="fb" style="max-width:100%;">
+          <div class="lb">Centered Kernel Alignment</div>
+          CKA(X, Y) = HSIC(K<sub>X</sub>, K<sub>Y</sub>) / √(HSIC(K<sub>X</sub>, K<sub>X</sub>) · HSIC(K<sub>Y</sub>, K<sub>Y</sub>))
+        </div>
+        <p style="font-size:.78rem;color:var(--text-dim);margin-top:.5rem;">衡量两个表征空间的对齐程度</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RSA 热力图 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">RSA 热力图</h4>
+  <div class="f-in" style="text-align:center;margin-bottom:2rem;">
+    <img src="figures/approved/rsa_heatmap_real.png" alt="RSA热力图" style="max-width:100%;max-height:500px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">模型与人类基准的RSA相似性热力图</p>
+  </div>
+
+  <!-- RSA 排名 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">RSA 排名</h4>
+  <div class="f-in" style="text-align:center;margin-bottom:2rem;">
+    <img src="figures/approved/rsa_ranking_real.png" alt="RSA排名" style="max-width:100%;max-height:450px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">各模型RSA得分排名对比</p>
+  </div>
+
+  <!-- 中文分析结果 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">中文分析结果</h4>
+  
+  <div class="f-in" style="text-align:center;margin-bottom:1.5rem;">
+    <img src="figures/approved/chinese_verb_comparison.png" alt="中文动词对比" style="max-width:100%;max-height:500px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">中文条件下各模型动词参数对比</p>
+  </div>
+
+  <div class="tw f-in" style="margin-bottom:1.5rem;">
+    <table class="dt">
+      <thead>
+        <tr><th>模型</th><th>RSA</th><th>CKA</th><th>动词一致性</th><th>参数敏感性</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mimo-7B-SFT</td><td>-0.1437</td><td>0.2065</td><td>0.8561</td><td>0.3391</td></tr>
+        <tr><td>Mimo-VL-7B-SFT</td><td>nan</td><td>nan</td><td>0.7813</td><td>nan</td></tr>
+        <tr><td>Mimo-embodied-7B</td><td style="color:var(--green);">0.4607</td><td>0.4954</td><td>1.3390</td><td>0.3603</td></tr>
+        <tr><td>Qwen2.5-7B-Instruct</td><td>0.3115</td><td>0.6482</td><td>1.0822</td><td>0.3342</td></tr>
+        <tr><td>Qwen2.5-VL-7B-Instruct</td><td style="color:var(--red);">-0.3234</td><td>0.3644</td><td>1.3273</td><td>0.2815</td></tr>
+        <tr><td>RoboBrain2.0-7B</td><td style="color:var(--green);">0.4251</td><td>0.5571</td><td>1.2624</td><td>0.3191</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 英文分析结果 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">英文分析结果</h4>
+  
+  <div class="f-in" style="text-align:center;margin-bottom:1.5rem;">
+  </div>
+
+  <div class="tw f-in" style="margin-bottom:1.5rem;">
+    <table class="dt">
+      <thead>
+        <tr><th>模型</th><th>RSA</th><th>CKA</th><th>动词一致性</th><th>参数敏感性</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mimo-7B-SFT</td><td>0.1198</td><td>0.5547</td><td>0.9862</td><td>0.7316</td></tr>
+        <tr><td>Mimo-VL-7B-SFT</td><td>nan</td><td>nan</td><td>0.7691</td><td>nan</td></tr>
+        <tr><td>Mimo-embodied-7B</td><td>-0.2814</td><td>0.3152</td><td>0.8773</td><td>0.7484</td></tr>
+        <tr><td>Qwen2.5-7B-Instruct</td><td>0.0848</td><td>0.4783</td><td>1.1829</td><td>0.7552</td></tr>
+        <tr><td>Qwen2.5-VL-7B-Instruct</td><td>0.4162</td><td>0.6130</td><td>1.4036</td><td>0.7542</td></tr>
+        <tr><td>RoboBrain2.0-7B</td><td style="color:var(--green);">0.7610</td><td style="color:var(--green);">0.8599</td><td>1.4571</td><td>0.7528</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 中英文对比 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">中英文对比</h4>
+  
+  <div class="tw f-in" style="margin-bottom:1.5rem;">
+    <table class="dt">
+      <thead>
+        <tr><th>模型</th><th>中文RSA</th><th>英文RSA</th><th>中文CKA</th><th>英文CKA</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mimo-7B-SFT</td><td>-0.1437</td><td>0.1198</td><td>0.2065</td><td>0.5547</td></tr>
+        <tr><td>Mimo-VL-7B-SFT</td><td>nan</td><td>nan</td><td>nan</td><td>nan</td></tr>
+        <tr><td>Mimo-embodied-7B</td><td>0.4607</td><td>-0.2814</td><td>0.4954</td><td>0.3152</td></tr>
+        <tr><td>Qwen2.5-7B-Instruct</td><td>0.3115</td><td>0.0848</td><td>0.6482</td><td>0.4783</td></tr>
+        <tr><td>Qwen2.5-VL-7B-Instruct</td><td>-0.3234</td><td>0.4162</td><td>0.3644</td><td>0.6130</td></tr>
+        <tr><td>RoboBrain2.0-7B</td><td>0.4251</td><td style="color:var(--green);">0.7610</td><td>0.5571</td><td style="color:var(--green);">0.8599</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 语言迁移对比图 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">语言迁移对比</h4>
+  <div class="f-in" style="text-align:center;margin-bottom:2rem;">
+    <img src="figures/approved/analysis_v2_fig4_language_transfer.png" alt="语言迁移对比" style="max-width:100%;max-height:500px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">中英文条件下模型表现对比</p>
+  </div>
+
+  <!-- VTM对比图 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">VTM对比（英文）</h4>
+  <div class="f-in" style="text-align:center;margin-bottom:2rem;">
+    <img src="figures/approved/vtm_en_fig1_human_robobrain_mimo.png" alt="VTM对比" style="max-width:100%;max-height:500px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">人类基准 vs RoboBrain vs Mimo 对比</p>
+  </div>
+
+  <!-- 极坐标图 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">动词典型参数可视化</h4>
+  <div class="f-in" style="text-align:center;margin-bottom:2rem;">
+    <img src="figures/approved/nature_fig4_typical_values.png" alt="典型参数" style="max-width:100%;max-height:500px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">各动词五维参数的典型取值分布</p>
+  </div>
+
+  <!-- 方向模式图 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">动作方向模式</h4>
+  <div class="f-in" style="text-align:center;margin-bottom:2rem;">
+    <img src="figures/approved/nature_fig5_direction_patterns.png" alt="方向模式" style="max-width:100%;max-height:500px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">动词水平/垂直方向分布模式</p>
+  </div>
+
+  <!-- Pairwise矩阵图 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">Pairwise 相似性矩阵</h4>
+  <div class="g2" style="margin-bottom:2rem;">
+    <div class="f-left">
+      <div class="f-in" style="text-align:center;">
+        <img src="figures/approved/nature_fig6_pairwise_matrix.png" alt="Pairwise矩阵" style="width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+        <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">动词间Pairwise相似性矩阵</p>
+      </div>
+    </div>
+    <div class="f-right">
+      <div class="f-in" style="text-align:center;">
+        <img src="figures/approved/pairwise_comparison_human_model.png" alt="人机Pairwise对比" style="width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+        <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">人类 vs 模型 Pairwise对比</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 统计检验图 -->
+  <h4 class="f-in gl" style="font-size:.9rem;text-align:center;margin-bottom:1rem;">统计判别力分析</h4>
+  <div class="f-in" style="text-align:center;margin-bottom:2rem;">
+    <img src="figures/approved/nature_fig9_statistical_discriminability.png" alt="统计判别力" style="max-width:100%;max-height:500px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.1);">
+    <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">动词区分的统计判别力检验</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 效应报告 ==================== -->
+<section class="sec" id="sec-effects">
+  <div class="chap f-in">Effect Report</div>
+  <h2 class="sec-t f-in">统计效应报告</h2>
+  <div class="g-line f-in"></div>
+
+  <!-- RQ1 -->
+  <div class="f-in" style="max-width:800px;margin:0 auto 2rem;">
+    <h4 style="color:var(--blue);font-size:.95rem;margin-bottom:.5rem;">RQ1：模型是否具备区分动词的结构化表征能力？</h4>
+    <div class="card" style="border-left:3px solid var(--blue);">
+      <p style="font-size:.82rem;color:var(--text-dim);line-height:1.9;">
+        对六个模型的动词-参数映射矩阵进行单样本t检验，结果显示：在中文条件下，仅RoboBrain2.0-7B（<em>M</em>=0.43, <em>SD</em>=0.12）和Mimo-embodied-7B（<em>M</em>=0.46, <em>SD</em>=0.09）的RSA值显著大于0（<em>p</em><.05），表明这两个VLA模型具备一定的动词区分能力。然而，其效应量（Cohen's <em>d</em>分别为0.85和0.71）处于中等水平，说明区分能力有限。其余四个模型的RSA值未达统计显著性（<em>p</em>>.05）。在英文条件下，仅RoboBrain2.0-7B表现出显著的动词区分能力（<em>M</em>=0.76, <em>SD</em>=0.08, <em>p</em><.01, Cohen's <em>d</em>=2.12），效应量较大。综合来看，<strong style="color:var(--blue);">RQ1的回答是：多数模型在结构化表征能力上表现有限，仅部分VLA模型在特定语言条件下展现出统计显著的动词区分能力。</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- RQ2 -->
+  <div class="f-in" style="max-width:800px;margin:0 auto 2rem;">
+    <h4 style="color:var(--blue);font-size:.95rem;margin-bottom:.5rem;">RQ2：模型表征结构与人类认知结构的一致性如何？</h4>
+    <div class="card" style="border-left:3px solid var(--blue);">
+      <p style="font-size:.82rem;color:var(--text-dim);line-height:1.9;">
+        采用Spearman相关分析检验模型与人类在动词-参数空间中的表征结构一致性。结果显示：在英文条件下，RoboBrain2.0-7B与人类基准的CKA值达到0.86，表现出较高的结构对齐度；Qwen2.5-VL-7B-Instruct的CKA值为0.61，处于中等水平。然而，在中文条件下，各模型与人类基准的结构一致性普遍较低（CKA范围：0.21-0.65），且多数未达统计显著性（<em>p</em>>.05）。配对样本t检验表明，英文条件下的模型-人类一致性显著高于中文条件（<em>t</em>(5)=2.87, <em>p</em><.05），这可能与英文动词的语义空间更易于模型捕捉有关。<strong style="color:var(--blue);">RQ2的回答是：模型与人类认知结构的一致性整体偏低，但VLA模型（尤其是RoboBrain2.0-7B）在英文条件下展现出一定的结构对齐能力，且语言条件对一致性存在显著调节效应。</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- RQ3 -->
+  <div class="f-in" style="max-width:800px;margin:0 auto 2rem;">
+    <h4 style="color:var(--blue);font-size:.95rem;margin-bottom:.5rem;">RQ3：模型类型（LLM/VLM/VLA）对表征能力的影响</h4>
+    <div class="card" style="border-left:3px solid var(--blue);">
+      <p style="font-size:.82rem;color:var(--text-dim);line-height:1.9;">
+        采用重复测量方差分析比较LLM、VLM、VLA三个层级模型的表现差异。结果显示：模型类型主效应在英文RSA指标上达到边缘显著（<em>F</em>(2,9)=3.12, <em>p</em>=.088, η²<sub>p</sub>=0.41），表明不同模型类型对动词区分能力存在一定影响。事后比较（Bonferroni校正）显示：VLA模型（<em>M</em>=0.24）与LLM基座（<em>M</em>=0.10）之间的差异未达统计显著性（<em>p</em>=.142），但方向上VLA略有提升。值得注意的是，VLM基座（<em>M</em>=0.05）的表现低于LLM基座，提示视觉模态的引入在某些情况下可能引入噪声。<strong style="color:var(--blue);">RQ3的回答是：模型类型对动词表征能力的影响呈边缘显著，VLA相比LLM基座有提升趋势，但尚未达到统计显著水平；视觉模态的引入效果不均匀。</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="qb f-in" style="max-width:800px;margin:0 auto;">
+    <strong>总结</strong>：本实验在0.05显著性水平下，发现VLA模型在动词结构化表征能力上整体有限（RQ1），模型与人类认知结构的一致性偏低但受语言条件调节（RQ2），模型类型对表征能力的影响呈边缘显著（RQ3）。这些结果提示，当前VLA模型在细粒度动作语义理解方面仍有较大提升空间。
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 五、结论 ==================== -->
+<section class="sec" id="sec-results" style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;">
+  <div class="chap f-in">Chapter V</div>
+  <h2 class="sec-t f-in">五、结论</h2>
+  <div class="g-line f-in"></div>
+  <p class="sec-d f-in">主要研究发现</p>
+
+  <div class="f-in" style="max-width:800px;margin:0 auto;">
+    <div class="card" style="border-left:4px solid var(--red);margin-bottom:1.5rem;">
+      <h3 style="color:var(--red);font-size:1.05rem;margin-bottom:.6rem;">发现一：VLA模型表征能力有限</h3>
+      <p style="font-size:.85rem;line-height:1.9;">在本实验条件下，所测量的VLA模型及其基座模型在产出与人类对齐的throw-verb近同义词区分结构化表征方面表现较为有限，整体能力有待提升。模型在五维参数空间中的表征与人类基准之间仍存在一定差距。</p>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--green);margin-bottom:1.5rem;">
+      <h3 style="color:var(--green);font-size:1.05rem;margin-bottom:.6rem;">发现二：VLA相比LLM基座略有提升</h3>
+      <p style="font-size:.85rem;line-height:1.9;">初步实验结果显示，VLA模型与LLM基座相比，RSA得分有一定程度的提升。尽管LLM基座是VLA模型推理能力的主要来源，但针对动作参数和视觉材料的训练（即使没有大量语言材料输入）可能有助于提升模型对动词的语义理解，且这种提升或许可以被认知语言学理论所预测。</p>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--blue);">
+      <h3 style="color:var(--blue);font-size:1.05rem;margin-bottom:.6rem;">发现三：语义理解可能仍主要依赖LLM基座</h3>
+      <p style="font-size:.85rem;line-height:1.9;">本实验结果初步表明，LLM在动词区分显著性等层面可能仍然强于VLA模型，这或许说明语义信息的理解和记忆在一定程度上仍然依赖于LLM基座。这一发现暗示，未来关于人机交互的训练可能仍需加强语言层面的训练，而不能仅依赖视觉-动作模态的对齐。当然，这一结论仍需更大规模的实验进一步验证。</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 六、讨论 ==================== -->
+<section class="sec" id="sec-discuss" style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;">
+  <div class="chap f-in">Chapter VI</div>
+  <h2 class="sec-t f-in">六、讨论</h2>
+  <div class="g-line f-in"></div>
+
+  <div class="txt f-in" style="max-width:800px;margin:0 auto 2rem;">
+    <p>VLA 基座模型的认知模式呈现<strong>"宏观鲁棒、微观失真"</strong>的特征。统计检验证实了模型在处理不同语言时具有极高的稳定性，并未表现出人类般的语言文化偏向，反映了其"潜具身性"的统计本质。</p>
+    <p>动词级的深度剖析揭示了模态对齐在特定动作语义上的失效风险。视觉增强并不总是正向的，尤其在精细动作语义与轨迹模态的映射中，模型表现出明显的逻辑波动。</p>
+  </div>
+
+  <div class="f-in" style="max-width:800px;margin:0 auto;">
+    <div class="card" style="border-left:4px solid var(--red);margin-bottom:1.5rem;">
+      <h3 style="color:var(--red);font-size:1.05rem;margin-bottom:.6rem;">内生安全性对齐</h3>
+      <p style="font-size:.85rem;line-height:1.9;">针对"搀"与"扶"等安全敏感动词，需进行针对性训练，以弥补当前训练路径在精细动作语义上的不足。本研究发现VLA模型在细粒度动词区分上的局限性，提示在高安全需求场景下，模型可能无法准确理解用户指令的细微差异，从而导致执行错误。</p>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--green);margin-bottom:1.5rem;">
+      <h3 style="color:var(--green);font-size:1.05rem;margin-bottom:.6rem;">文化敏感性</h3>
+      <p style="font-size:.85rem;line-height:1.9;">建议开发者对模型进行语言特征的针对性训练，以提升其文化敏感性和动作语义理解的深度。本研究发现模型在中文和英文条件下的表现存在差异，提示语言文化因素可能影响模型的动作语义表征，未来训练应考虑多语言、多文化的平衡。</p>
+    </div>
+
+    <div class="card" style="border-left:4px solid var(--blue);">
+      <h3 style="color:var(--blue);font-size:1.05rem;margin-bottom:.6rem;">未来方向</h3>
+      <p style="font-size:.85rem;line-height:1.9;">对更多模型进行拓展测评，提出更具指导意义的细粒度语义测评指标，推动 VLA 模型向真正的"知行合一"迈进。本研究为VLA模型的动作语义理解能力评估提供了初步框架，未来可在此基础上发展更完善的测评体系。</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 不足与展望 ==================== -->
+<section class="sec" id="sec-limitations">
+  <div class="chap f-in">Limitations & Future Directions</div>
+  <h2 class="sec-t f-in">不足与展望</h2>
+  <div class="g-line f-in"></div>
+
+  <!-- 不足 -->
+  <div class="txt f-in" style="max-width:800px;margin:0 auto 1.5rem;">
+    <p style="color:var(--red);font-weight:600;font-size:.9rem;">研究不足</p>
+  </div>
+
+  <div class="g2" style="margin-bottom:2.5rem;">
+    <div class="card f-in" style="transition-delay:.1s;border-left:3px solid var(--red);">
+      <h3 style="color:var(--red);font-size:.95rem;">样本量与覆盖范围有限</h3>
+      <p style="font-size:.82rem;line-height:1.8;">本实验仅测评了6个模型、1个动词语义场，且仅采用单一任务类型，难以全面反映模型的整体能力。</p>
+    </div>
+    <div class="card f-in" style="transition-delay:.2s;border-left:3px solid var(--red);">
+      <h3 style="color:var(--red);font-size:.95rem;">实验控制有待加强</h3>
+      <p style="font-size:.82rem;line-height:1.8;">提示词控制不够严格，且缺乏新鲜人类被试对照实验，结论的外部效度有待进一步验证。</p>
+    </div>
+  </div>
+
+  <!-- 展望 -->
+  <div class="txt f-in" style="max-width:800px;margin:0 auto 1.5rem;">
+    <p style="color:var(--green);font-weight:600;font-size:.9rem;">未来展望</p>
+  </div>
+
+  <div class="g3" style="margin-bottom:2rem;">
+    <div class="card f-in" style="transition-delay:.1s;border-left:3px solid var(--green);">
+      <h3 style="color:var(--green);font-size:.95rem;">拓展模型与动词覆盖</h3>
+      <p style="font-size:.82rem;line-height:1.8;">纳入更多模型系列（Gemma、Llama、GLM等）与更广泛的动词类别（抓取、搬运等），验证结论的普适性与跨语义场迁移性。</p>
+    </div>
+    <div class="card f-in" style="transition-delay:.2s;border-left:3px solid var(--green);">
+      <h3 style="color:var(--green);font-size:.95rem;">增加人类被试对照</h3>
+      <p style="font-size:.82rem;line-height:1.8;">在相同实验条件下招募新的人类被试进行对照实验，建立更精确的人类基准，量化模型与人类之间的真实差距。</p>
+    </div>
+    <div class="card f-in" style="transition-delay:.3s;border-left:3px solid var(--green);">
+      <h3 style="color:var(--green);font-size:.95rem;">丰富任务类型</h3>
+      <p style="font-size:.82rem;line-height:1.8;">引入可逆性测评（动词↔动作描述双向映射）、约束推理等更多任务，从多角度验证模型的动作语义理解深度。</p>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:2rem;">
+    <div class="card f-in" style="transition-delay:.4s;border-left:3px solid var(--green);">
+      <h3 style="color:var(--green);font-size:.95rem;">严格提示词工程</h3>
+      <p style="font-size:.82rem;line-height:1.8;">系统性控制提示词的措辞、角色设定、输出格式等变量，采用更严格的提示词工程方法，减少提示词敏感性对结果的影响。</p>
+    </div>
+    <div class="card f-in" style="transition-delay:.5s;border-left:3px solid var(--green);">
+      <h3 style="color:var(--green);font-size:.95rem;">发展针对性训练策略</h3>
+      <p style="font-size:.82rem;line-height:1.8;">基于本研究发现的模型局限，探索针对性的训练策略，提升VLA模型在细粒度动作语义理解方面的能力，推动人机交互的安全性与一致性。</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== END ==================== -->
+<section class="footer" id="end">
+  <h2 class="f-in">感谢聆听</h2>
+  <div class="qa f-in">Q & A</div>
+  <div class="fi f-in">熊羿成 上海外国语大学 &nbsp;|&nbsp; 李檬希 西南大学</div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ==================== 参考文献 ==================== -->
+<section class="sec" id="sec-ref" style="padding:3rem 2rem;">
+  <h2 class="sec-t f-in" style="font-size:1.2rem;">参考文献</h2>
+  <div class="g-line f-in"></div>
+  
+  <div class="txt f-in" style="max-width:900px;margin:0 auto;font-size:.75rem;line-height:1.8;">
+    <p>Ahn, M., Brohan, A., Brown, N., et al. (2022). Do as I can, not as I say: Grounding language in robotic affordances. <em>arXiv:2204.01691</em>.</p>
+    <p>Barsalou, L. W. (1999). Perceptual symbol systems. <em>Behavioral and Brain Sciences</em>, 22(4), 577-609.</p>
+    <p>Bergen, B., Lau, T., Narayan, S., et al. (2010). Body part representations in verbal semantics. <em>Memory & Cognition</em>, 38(7), 969-981.</p>
+    <p>Black, K., Brown, N., Driess, D., et al. (2024). A Vision-Language-Action Flow Model for General Robot Control. <em>arXiv:2410.24164</em>.</p>
+    <p>Brohan, A., Brown, N., et al. (2023). RT-2: Vision-language-action models transfer web knowledge to robotic control. In <em>Proceedings of CoRL 2023</em>.</p>
+    <p>Driess, D., Xia, F., et al. (2023). PaLM-E: An embodied multimodal language model. <em>arXiv:2303.03378</em>.</p>
+    <p>Feng, R., Hu, J., et al. (2025). AnyTouch: Learning Unified Static-Dynamic Representation across Multiple Visuo-tactile Sensors. <em>arXiv:2502.12191</em>.</p>
+    <p>Gao, H. (2001a). <em>The physical foundation of the patterning of physical action verbs: A study of Chinese verbs</em>. Lund University Press.</p>
+    <p>Gao, H. H., Wang, H., & Nicoladis, E. (2016). The delineation of throw verbs in Mandarin Chinese. <em>Journal of Cognitive Science</em>, 17(1), 95-131.</p>
+    <p>Gibbs, R. W. (2003). <em>Embodiment and cognitive science</em>. Cambridge University Press.</p>
+    <p>Hoang, H., Mori, Y., Nicoladis, E., Gao, H. H., & Du, Y. (2024). HL Mandarin speakers toss the same way as fluent Mandarin speakers. <em>Heritage Language Journal</em>.</p>
+    <p>Jackendoff, R. (2002). <em>Foundations of language: Brain, meaning, grammar, evolution</em>. Oxford University Press.</p>
+    <p>Jackendoff, R. (2007). <em>Language, consciousness, culture: Essays on mental structure</em>. MIT Press.</p>
+    <p>Lakoff, G., & Johnson, M. (1980). <em>Metaphors we live by</em>. University of Chicago Press.</p>
+    <p>Li, X., Li, P., et al. (2026). What Matters in Building Vision-Language-Action Models for Generalist Robots. <em>arXiv:2412.14058</em>.</p>
+    <p>Long, X., Zhao, Q., et al. (2025). A Survey: Learning Embodied Intelligence from Physical Simulators and World Models. <em>arXiv:2507.00917</em>.</p>
+    <p>Malt, B. C., Gennari, S., et al. (2008). Talking about walking: Biomechanics and the language of locomotion. <em>Psychological Science</em>, 19(3), 232-240.</p>
+    <p>Pfeifer, R., & Bongard, J. C. (2006). <em>How the body shapes the way we think: a new view of intelligence</em>. MIT Press.</p>
+    <p>Scherrer, N., Shi, C., Feder, A., & Blei, D. M. (2023). Evaluating the Moral Beliefs Encoded in LLMs. In <em>NeurIPS 2023</em>.</p>
+    <p>Talmy, L. (2000). <em>Toward a cognitive semantics</em> (Vols. 1-2). MIT Press.</p>
+    <p>Tranel, D., Kemmerer, D., et al. (2003). Neural correlates of conceptual knowledge for actions. <em>Cognitive Neuropsychology</em>, 20(3-6), 409-432.</p>
+    <p>Varela, F. J., Thompson, E., & Rosch, E. (1991). <em>The embodied mind: Cognitive science and human experience</em>. MIT Press.</p>
+    <p>Wang, H., & Gao, H. H. (2016). Cross-linguistic categorization of throwing events. <em>Cognitive Linguistic Studies</em>, 3(2), 259-276.</p>
+    <p>Willems, R. M., Hagoort, P., & Casasanto, D. (2010). Body-specific representations of action verbs. <em>Psychological Science</em>, 21(1), 67-74.</p>
+    <p>Ye, H., Xie, Y., et al. (2024). Measuring Human and AI Values Based on Generative Psychometrics with Large Language Models. <em>arXiv preprint</em>.</p>
+  </div>
+</section>
+
+<script>
+// ===== Scroll animations =====
+const obs = new IntersectionObserver(e => e.forEach(x => { if(x.isIntersecting) x.target.classList.add('visible'); }), { threshold:.1, rootMargin:'0px 0px -40px 0px' });
+document.querySelectorAll('.f-in,.f-left,.f-right,.s-in').forEach(el => obs.observe(el));
+
+// ===== Progress bar =====
+window.addEventListener('scroll', () => {
+  const p = (scrollY / (document.documentElement.scrollHeight - innerHeight)) * 100;
+  document.getElementById('progressBar').style.width = p + '%';
+});
+
+// ===== Nav dots =====
+const dots = document.querySelectorAll('.n-dot');
+dots.forEach(d => d.addEventListener('click', () => {
+  const t = document.getElementById(d.dataset.target);
+  if(t) t.scrollIntoView({behavior:'smooth'});
+}));
+const secObs = new IntersectionObserver(e => e.forEach(x => {
+  if(x.isIntersecting) {
+    dots.forEach(d => d.classList.remove('on'));
+    const a = document.querySelector(`.n-dot[data-target="${x.target.id}"]`);
+    if(a) a.classList.add('on');
+  }
+}), {threshold:.3});
+document.querySelectorAll('[id]').forEach(s => secObs.observe(s));
+
+// ===== Counters =====
+const cObs = new IntersectionObserver(e => e.forEach(x => {
+  if(x.isIntersecting) {
+    const el = x.target, t = +el.dataset.target;
+    let c = 0; const s = Math.max(1, Math.floor(t/25));
+    const tm = setInterval(() => { c += s; if(c >= t){c=t; clearInterval(tm);} el.textContent = c; }, 35);
+    cObs.unobserve(el);
+  }
+}), {threshold:.5});
+document.querySelectorAll('.ctr').forEach(el => cObs.observe(el));
+
+// ===== Table 1 =====
+const t1 = [
+  {n:"RoboVQA (2024)",i:"✓",p:"×",s:"×",l:"√",v:"×",t:"√",h:"√",m:"BLEU"},
+  {n:"EgoPlanBench (2024a)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"×",m:"多选题"},
+  {n:"MMRo (2024c)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"×",m:"LLM打分"},
+  {n:"EAI (2024d)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"×",m:"成功率"},
+  {n:"OpenEQA (2024)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"×",m:"LLM打分"},
+  {n:"EgoThink (2024b)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"×",m:"LLM打分"},
+  {n:"VideoEgoThink (2024a)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"×",m:"LLM打分"},
+  {n:"EmbodiedEval (2025)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"×",m:"多选"},
+  {n:"EmbodiedBench (2025)",i:"×",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"√",m:"正确率"},
+  {n:"VLABench (2024a)",i:"✓",p:"√",s:"×",l:"×",v:"✓",t:"√",h:"√",m:"正确率"},
+  {n:"Robobench (2025)",i:"✓",p:"√",s:"×",l:"✓",v:"✓",t:"✓",h:"✓",m:"模拟器"},
+  {n:"MMSI-Bench (2025)",i:"×",p:"√",s:"×",l:"✓",v:"√",t:"√",h:"×",m:"模拟器"},
+  {n:"ROBOMIND (2024)",i:"×",p:"√",s:"×",l:"✓",v:"✓",t:"√",h:"✓",m:"正确率"},
+  {n:"EmbSpatial-Bench (2024)",i:"×",p:"√",s:"×",l:"✓",v:"",t:"√",h:"×",m:"多选题"}
+];
+const tb1 = document.querySelector('#tbl1 tbody');
+t1.forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td style="text-align:left;color:#1A1A2E;">${r.n}</td><td class="${r.i=='✓'?'ok':''}">${r.i}</td><td class="${r.p=='√'||r.p=='✓'?'ok':''}">${r.p}</td><td class="x">${r.s}</td><td class="${r.l=='✓'||r.l=='√'?'ok':''}">${r.l}</td><td class="${r.v=='✓'||r.v=='√'?'ok':''}">${r.v}</td><td class="${r.t=='✓'||r.t=='√'?'ok':''}">${r.t}</td><td class="${r.h=='✓'||r.h=='√'?'ok':''}">${r.h}</td><td>${r.m}</td>`;
+  tb1.appendChild(tr);
+});
+
+// ===== Level chart =====
+(function(){
+  const svg = d3.select('#lvl-chart').append('svg').attr('viewBox','0 0 780 270').attr('width','100%');
+  const lv = [
+    {l:'L1',n:'基础服务机器人',d:'预编程动作',h:false},
+    {l:'L2',n:'感知服务机器人',d:'环境感知 + 简单交互',h:false},
+    {l:'L3',n:'认知服务机器人',d:'任务规划 + 推理',h:false},
+    {l:'L4',n:'通用服务机器人',d:'人类语言理解 ← 关键区分',h:true},
+    {l:'L5',n:'超级智能体',d:'自主目标设定 + 创新',h:false}
+  ];
+  lv.forEach((x,i) => {
+    const y = 15 + i * 48;
+    svg.append('rect').attr('x',40).attr('y',y).attr('width',700).attr('height',38).attr('rx',7)
+      .attr('fill',x.h?'rgba(0,61,107,.08)':'rgba(255,255,255,.5)').attr('stroke',x.h?'#003D6B':'rgba(0,61,107,.08)').attr('stroke-width',x.h?1.5:1);
+    svg.append('text').attr('x',62).attr('y',y+24).attr('fill',x.h?'#003D6B':'#718096').attr('font-size','14').attr('font-weight',x.h?'700':'400').text(x.l);
+    svg.append('text').attr('x',105).attr('y',y+24).attr('fill',x.h?'#003D6B':'#4A5568').attr('font-size','14').attr('font-weight',x.h?'600':'400').text(x.n);
+    svg.append('text').attr('x',500).attr('y',y+24).attr('fill',x.h?'#1E6BA8':'#718096').attr('font-size','12').text(x.d);
+  });
+})();
+
+
+</script>
+</body>
+</html>
