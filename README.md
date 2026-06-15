@@ -53,13 +53,9 @@ embodied-verb-cognition/
 │   ├── Hoang_2024_HL_Mandarin.pdf
 │   └── Wang_Gao_2016_CogLS.pdf
 │
-├── data/                        # 实验数据（本地，不提交）
-│   ├── results/
-│   └── pilot_results/
-│
-└── scripts/                     # 辅助脚本
-    ├── setup.sh               # 环境配置
-    └── analyze_results.py     # 结果分析
+└── data/                        # 实验数据（本地，不提交）
+    ├── results/
+    └── pilot_results/
 ```
 
 ## 快速开始
