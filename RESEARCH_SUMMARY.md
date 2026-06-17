@@ -1,14 +1,28 @@
-# 认知语义学视角下具身智能基座模型近同义动词区分能力初探
+## 项目思路速览
 
-## 项目的重点问题
+Probing  large model's ability on **Physical Action Verb Synonyms disambiguation(PAVSD)**:
 
-1. 大模型能否像人类一样理解动词的细分语义（可不可以参数化表征）
-2. 大模型能否进行细分动词的区分判断
-3. 视觉增强训练能否加强这种表现
+
+
+1: Linguistics and cognitive scientists have proved that PA-verb synonyms disambiguation is an **embodied** and **culture sensitive**  task, it relies on **Verb-Paramaters mapping**, and **can't be solved well by corpus based methods**.
+
+2: This makes the task an interesting challenge towards large models. Especially raising the question: can visual and action reinforced learning improves LMs ability to build such Verb-Parameters mapping, thus reaching alignment with human?
+
+3: Based on former experience that use "LLM-as-Participant" method, researcher applied similar experience setting on LLMs, VLMs and VLAs, and tested their performance on representing and disambiguating throw verbs.
+
+4: We gathered MSE, RSA, CKA and jaccard similarity to reflect model's performance across two languages and output format.
+
+5: Research shows that all models performs rather bad on the tasks.
+
+6:
+
+  
+
+.
 
 ---
 
-## 根本思路
+## 详细论述
 
 ### 动词同近义词拆分：认知语义学的基本问题
 
@@ -293,43 +307,81 @@ HD - 执行动作时手部的主要水平运动方向
 
 **Qwen系列**：
 
-| 指标         | LLM    | VLM    | VLA   | 趋势       |
-| ---------- | ------ | ------ | ----- | -------- |
-| MSE-CN     | 0.225  | 0.233  | 0.122 | VLA最优    |
-| MSE-EN     | 0.239  | 0.201  | 0.185 | 持续下降     |
-| RSA-CN     | 0.147  | -0.528 | 0.504 | VLA回升    |
-| RSA-EN     | -0.242 | 0.513  | 0.780 | 持续提升     |
-| CKA-CN     | 0.387  | 0.302  | 0.565 | VLA最优    |
-| CKA-EN     | 0.401  | 0.677  | 0.849 | 持续提升     |
-| Jaccard-CN | 0.154  | 0.154  | 0.250 | VLA提升    |
-| Jaccard-EN | 0.000  | 0.267  | 0.267 | VLM提升后持平 |
+**参数格式-中文**：
 
-**讨论**：
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.225 | 0.233 | 0.122 | VLA最优 |
+| RSA | 0.147 | -0.528 | 0.504 | VLA回升 |
+| CKA | 0.387 | 0.302 | 0.565 | VLA最优 |
+| Jaccard | 0.154 | 0.154 | 0.250 | VLA提升 |
 
-- **MSE**：中文条件下VLA最优（0.122），英文条件下持续下降（0.239→0.185）
-- **RSA**：中文条件下VLM下降后VLA回升（0.147→-0.528→0.504），英文条件下持续提升（-0.242→0.780）
-- **CKA**：中文条件下VLM下降后VLA回升（0.387→0.302→0.565），英文条件下持续提升（0.401→0.849）
-- **Jaccard**：中文条件下VLA提升（0.154→0.250），英文条件下VLM提升后持平（0.000→0.267）
+**参数格式-英文**：
+
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.239 | 0.201 | 0.185 | 持续下降 |
+| RSA | -0.242 | 0.513 | 0.780 | 持续提升 |
+| CKA | 0.401 | 0.677 | 0.849 | 持续提升 |
+| Jaccard | 0.000 | 0.267 | 0.267 | VLM提升后持平 |
+
+**言语格式-中文**：
+
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.150 | 0.180 | 0.163 | LLM最优 |
+| RSA | 0.138 | 0.152 | -0.201 | VLM最优 |
+| CKA | 0.366 | 0.373 | 0.168 | VLM最优 |
+| Jaccard | 0.077 | 0.000 | 0.154 | VLA提升 |
+
+**言语格式-英文**：
+
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.071 | 0.075 | 0.072 | LLM最优 |
+| RSA | 0.622 | 0.465 | -0.124 | LLM最优 |
+| CKA | 0.618 | 0.640 | 0.478 | VLM最优 |
+| Jaccard | 0.182 | 0.308 | 0.133 | VLM最优 |
+
+---
 
 **Mimo系列**：
 
-| 指标         | LLM    | VLM    | VLA   | 趋势    |
-| ---------- | ------ | ------ | ----- | ----- |
-| MSE-CN     | 0.190  | 0.155  | 0.213 | VLM最优 |
-| MSE-EN     | 0.235  | 0.171  | 0.218 | VLM最优 |
-| RSA-CN     | -0.442 | -0.178 | 0.066 | 持续提升  |
-| RSA-EN     | -0.043 | -0.132 | 0.014 | VLA回升 |
-| CKA-CN     | 0.073  | 0.389  | 0.288 | VLM最优 |
-| CKA-EN     | 0.223  | 0.415  | 0.320 | VLM最优 |
-| Jaccard-CN | 0.273  | 0.188  | 0.333 | VLA回升 |
-| Jaccard-EN | 0.083  | 0.071  | 0.214 | VLA提升 |
+**参数格式-中文**：
 
-**讨论**：
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.190 | 0.155 | 0.213 | VLM最优 |
+| RSA | -0.442 | -0.178 | 0.066 | 持续提升 |
+| CKA | 0.073 | 0.389 | 0.288 | VLM最优 |
+| Jaccard | 0.273 | 0.188 | 0.333 | VLA回升 |
 
-- **MSE**：中英文条件下均为VLM最优（中文0.155，英文0.171），VLA回升
-- **RSA**：中文条件下持续提升（-0.442→0.066），英文条件下VLM下降后VLA回升（-0.043→-0.132→0.014）
-- **CKA**：中英文条件下均为VLM最优（中文0.389，英文0.415），VLA下降
-- **Jaccard**：中文条件下VLM下降后VLA回升（0.273→0.188→0.333），英文条件下VLA显著提升（0.083→0.214）
+**参数格式-英文**：
+
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.235 | 0.171 | 0.218 | VLM最优 |
+| RSA | -0.043 | -0.132 | 0.014 | VLA回升 |
+| CKA | 0.223 | 0.415 | 0.320 | VLM最优 |
+| Jaccard | 0.083 | 0.071 | 0.214 | VLA提升 |
+
+**言语格式-中文**：
+
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.197 | 0.135 | 0.189 | VLM最优 |
+| RSA | 0.464 | -0.027 | 0.121 | LLM最优 |
+| CKA | 0.485 | 0.220 | 0.268 | LLM最优 |
+| Jaccard | 0.077 | 0.000 | 0.214 | VLA提升 |
+
+**言语格式-英文**：
+
+| 指标 | LLM | VLM | VLA | 趋势 |
+|------|-----|-----|-----|------|
+| MSE | 0.175 | 0.104 | 0.113 | VLM最优 |
+| RSA | 0.152 | 0.076 | 0.205 | VLA最优 |
+| CKA | 0.487 | 0.366 | 0.522 | VLA最优 |
+| Jaccard | 0.231 | 0.167 | 0.167 | LLM最优 |
 
 ---
 
