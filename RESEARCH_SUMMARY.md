@@ -2,8 +2,6 @@
 
 Probing  large model's ability on **Physical Action Verb Synonyms disambiguation(PAVSD)**:
 
-
-
 1: Linguistics and cognitive scientists have proved that PA-verb synonyms disambiguation is an **embodied** and **culture sensitive**  task, it relies on **Verb-Paramaters mapping**, and **can't be solved well by corpus based methods**.
 
 2: This makes the task an interesting challenge towards large models. Especially raising the question: can visual and action reinforced learning improves LMs ability to build such Verb-Parameters mapping, thus reaching alignment with human?
@@ -15,8 +13,6 @@ Probing  large model's ability on **Physical Action Verb Synonyms disambiguation
 5: Research shows that all models performs rather bad on the tasks.
 
 6:
-
-  
 
 .
 
@@ -161,6 +157,7 @@ HD - 执行动作时手部的主要水平运动方向
 $$v = [f, h, a, d_h, d_v] \in \mathbb{R}^5$$
 
 其中：
+
 - $f$：力度（FORCE），归一化到[0, 1]
 - $h$：手部高度（HAND），归一化到[0, 1]
 - $a$：臂姿（ARM），0=弯曲，1=伸直
@@ -278,6 +275,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 ![Param-CN](presentation/figures/fig5_param-cn.png)
 
 **讨论**：
+
 - **MSE**：RoboBrain最优（0.122），Mimo-VL次之（0.155），Qwen2.5-VL最差（0.233）
 - **RSA**：RoboBrain最优（0.504），Qwen2.5次之（0.147），Qwen2.5-VL最差（-0.528）
 - **CKA**：RoboBrain最优（0.565），Mimo-VL和Qwen2.5接近（0.389/0.387），Mimo-7B最差（0.073）
@@ -290,6 +288,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 ![Param-EN](presentation/figures/fig5_param-en.png)
 
 **讨论**：
+
 - **MSE**：Mimo-VL最优（0.171），RoboBrain次之（0.185），Qwen2.5最差（0.239）
 - **RSA**：RoboBrain最优（0.780），Qwen2.5-VL次之（0.513），Qwen2.5最差（-0.242）
 - **CKA**：RoboBrain最优（0.849），Qwen2.5-VL次之（0.677），Mimo-7B最差（0.223）
@@ -302,6 +301,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 ![Verb-CN](presentation/figures/fig5_verb-cn.png)
 
 **讨论**：
+
 - **MSE**：Mimo-VL最优（0.135），Qwen2.5次之（0.150），Mimo-7B最差（0.197）
 - **RSA**：Mimo-7B最优（0.464），Qwen2.5-VL次之（0.152），RoboBrain最差（-0.201）
 - **CKA**：Mimo-7B最优（0.485），Qwen2.5-VL次之（0.373），RoboBrain最差（0.168）
@@ -314,6 +314,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 ![Verb-EN](presentation/figures/fig5_verb-en.png)
 
 **讨论**：
+
 - **MSE**：Qwen2.5最优（0.071），RoboBrain次之（0.072），Mimo-7B最差（0.175）
 - **RSA**：Qwen2.5最优（0.622），Qwen2.5-VL次之（0.465），RoboBrain最差（-0.124）
 - **CKA**：Qwen2.5-VL最优（0.640），Qwen2.5次之（0.618），Mimo-VL最差（0.366）
@@ -328,6 +329,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 上图展示了同一模型同一格式下，中文与英文的差值（中文 - 英文）。正值表示中文更优，负值表示英文更优。
 
 **讨论**：
+
 - **MSE**：参数格式下5/6模型中文更优（正值），言语格式下所有模型英文更优（负值）
 - **RSA**：因模型和格式而异，无一致趋势
 - **CKA**：所有模型英文更优（负值），参数格式差异更大
@@ -342,6 +344,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 上图展示了同一模型同一语言下，参数格式与言语格式的差值（参数 - 言语）。正值表示参数格式更优，负值表示言语格式更优。
 
 **讨论**：
+
 - **MSE**：中文条件下4/6模型言语格式更优（负值），英文条件下所有模型言语格式更优（负值）
 - **RSA**：因模型而异，无一致趋势
 - **CKA**：中文条件下3/6模型参数格式更优（正值），英文条件下3/6模型言语格式更优（负值）
@@ -374,6 +377,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 ### 核心发现
 
 1. **最优组合**：
+   
    - 参数格式-中文：RoboBrain（MSE: 0.122, RSA: 0.504, CKA: 0.565）
    - 参数格式-英文：RoboBrain（RSA: 0.780, CKA: 0.849）
    - 言语格式-中文：Mimo-VL（MSE: 0.135）

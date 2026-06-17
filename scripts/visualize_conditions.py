@@ -1,6 +1,7 @@
 """
 四个条件的可视化
 每个条件：6个模型 × 4个指标
+颜色方案：8种色系，每种色系3个深浅
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,8 +21,13 @@ plt.rcParams['ytick.major.width'] = 0.8
 model_names = ['Qwen2.5', 'Qwen2.5-VL', 'RoboBrain', 'Mimo-7B', 'Mimo-VL', 'Mimo-emb']
 metrics = ['MSE', 'RSA', 'CKA', 'Jaccard']
 
-# 颜色：Qwen系列蓝色渐进，Mimo系列绿色渐进
-colors = ['#B3CDE3', '#6C9BD1', '#3A7CA5', '#B5E0B5', '#6BCB77', '#2D8B4E']
+# 颜色方案：8种色系，每种3个深浅
+colors = {
+    'MSE': ['#B3D9FF', '#66B2FF', '#0066CC', '#B3FFB3', '#66FF66', '#00CC00'],
+    'RSA': ['#FFB3B3', '#FF6666', '#CC0000', '#FFB3FF', '#FF66FF', '#CC00CC'],
+    'CKA': ['#B3FFFF', '#66FFFF', '#00CCCC', '#FFD9B3', '#FFB366', '#CC7700'],
+    'Jaccard': ['#FFB3D9', '#FF66B2', '#CC0066', '#D9B3FF', '#B266FF', '#7700CC'],
+}
 
 # 四个条件的数据（按照新顺序：Qwen2.5, Qwen2.5-VL, RoboBrain, Mimo-7B, Mimo-VL, Mimo-embodied）
 conditions_data = {
@@ -75,13 +81,14 @@ for cond_key, cond_info in conditions_data.items():
         ax = axes[idx]
         values = cond_info['data'][metric]
 
-        bars = ax.bar(range(len(model_names)), values, color=colors[idx % len(colors)],
+        bars = ax.bar(range(len(model_names)), values, color=colors[metric],
                       edgecolor='white', linewidth=0.5)
 
-        # 标记最大值
-        max_idx = np.argmax(values)
-        bars[max_idx].set_edgecolor('black')
-        bars[max_idx].set_linewidth(2)
+        # 标记最大值（RSA, CKA, Jaccard越大越好）
+        if metric != 'MSE':
+            max_idx = np.argmax(values)
+            bars[max_idx].set_edgecolor('black')
+            bars[max_idx].set_linewidth(2)
 
         # 标记最小值（MSE越小越好）
         if metric == 'MSE':
