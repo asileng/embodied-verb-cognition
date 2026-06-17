@@ -265,10 +265,107 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 详细数据表格请查看 [EXPERIMENT_TABLES.md](EXPERIMENT_TABLES.md)
 
+### 总体表现
+
+![Overview](presentation/figures/fig1_overview.png)
+
+上图展示了6个模型在4种条件下（参数-中文、参数-英文、言语-中文、言语-英文）的4个指标表现。
+
+---
+
+### 一、参数格式-中文条件
+
+**讨论**：
+- **MSE**：RoboBrain最优（0.122），Mimo-VL次之（0.155），Qwen2.5-VL最差（0.233）
+- **RSA**：RoboBrain最优（0.504），Qwen2.5次之（0.147），Qwen2.5-VL最差（-0.528）
+- **CKA**：RoboBrain最优（0.565），Mimo-VL和Qwen2.5接近（0.389/0.387），Mimo-7B最差（0.073）
+- **Jaccard**：Mimo-embodied最优（0.333），RoboBrain次之（0.250），Mimo-VL和Qwen2.5-VL最差（0.154/0.188）
+
+---
+
+### 二、参数格式-英文条件
+
+**讨论**：
+- **MSE**：Mimo-VL最优（0.171），RoboBrain次之（0.185），Qwen2.5最差（0.239）
+- **RSA**：RoboBrain最优（0.780），Qwen2.5-VL次之（0.513），Qwen2.5最差（-0.242）
+- **CKA**：RoboBrain最优（0.849），Qwen2.5-VL次之（0.677），Mimo-7B最差（0.223）
+- **Jaccard**：RoboBrain和Qwen2.5-VL并列最优（0.267），Qwen2.5最差（0.000）
+
+---
+
+### 三、言语格式-中文条件
+
+**讨论**：
+- **MSE**：Mimo-VL最优（0.135），Qwen2.5次之（0.150），Mimo-7B最差（0.197）
+- **RSA**：Mimo-7B最优（0.464），Qwen2.5-VL次之（0.152），RoboBrain最差（-0.201）
+- **CKA**：Mimo-7B最优（0.485），Qwen2.5-VL次之（0.373），RoboBrain最差（0.168）
+- **Jaccard**：Mimo-embodied最优（0.214），RoboBrain次之（0.154），Mimo-VL和Qwen2.5-VL最差（0.000）
+
+---
+
+### 四、言语格式-英文条件
+
+**讨论**：
+- **MSE**：Qwen2.5最优（0.071），RoboBrain次之（0.072），Mimo-7B最差（0.175）
+- **RSA**：Qwen2.5最优（0.622），Qwen2.5-VL次之（0.465），RoboBrain最差（-0.124）
+- **CKA**：Qwen2.5-VL最优（0.640），Qwen2.5次之（0.618），Mimo-VL最差（0.366）
+- **Jaccard**：Qwen2.5-VL最优（0.308），Mimo-7B次之（0.231），RoboBrain最差（0.133）
+
+---
+
+### 五、语言影响（中文 vs 英文）
+
+![Language Effect](presentation/figures/fig2_language_effect.png)
+
+上图展示了同一模型同一格式下，中文与英文的差值（中文 - 英文）。正值表示中文更优，负值表示英文更优。
+
+**讨论**：
+- **MSE**：参数格式下5/6模型中文更优（正值），言语格式下所有模型英文更优（负值）
+- **RSA**：因模型和格式而异，无一致趋势
+- **CKA**：所有模型英文更优（负值），参数格式差异更大
+- **Jaccard**：参数格式下4/6模型中文更优（正值），言语格式下4/6模型英文更优（负值）
+
+---
+
+### 六、提示词影响（参数 vs 言语）
+
+![Prompt Effect](presentation/figures/fig3_prompt_effect.png)
+
+上图展示了同一模型同一语言下，参数格式与言语格式的差值（参数 - 言语）。正值表示参数格式更优，负值表示言语格式更优。
+
+**讨论**：
+- **MSE**：中文条件下4/6模型言语格式更优（负值），英文条件下所有模型言语格式更优（负值）
+- **RSA**：因模型而异，无一致趋势
+- **CKA**：中文条件下3/6模型参数格式更优（正值），英文条件下3/6模型言语格式更优（负值）
+- **Jaccard**：中文条件下所有模型参数格式更优（正值），英文条件下4/6模型言语格式更优（负值）
+
+---
+
+### 七、模型进化（LLM → VLM → VLA）
+
+#### Qwen系列
+
+![Qwen Evolution](presentation/figures/fig4a_qwen_evolution.png)
+
+**参数格式-中文**：VLA在MSE和CKA上最优，RSA从VLM回升
+**参数格式-英文**：MSE持续下降，RSA和CKA持续提升，Jaccard在VLM提升后持平
+**言语格式-中文**：LLM在MSE和RSA上最优，VLM在CKA上最优，Jaccard在VLA提升
+**言语格式-英文**：LLM在MSE和RSA上最优，VLM在CKA和Jaccard上最优
+
+#### Mimo系列
+
+![Mimo Evolution](presentation/figures/fig4b_mimo_evolution.png)
+
+**参数格式-中文**：VLM在MSE和CKA上最优，RSA持续提升，Jaccard在VLA回升
+**参数格式-英文**：VLM在MSE和CKA上最优，RSA在VLA回升，Jaccard在VLA提升
+**言语格式-中文**：VLM在MSE上最优，LLM在RSA和CKA上最优，Jaccard在VLA提升
+**言语格式-英文**：VLM在MSE和CKA上最优，VLA在RSA上最优，Jaccard在LLM最优
+
+---
+
 ### 核心发现
 
 1. **最优组合**：
-   
    - 参数格式-中文：RoboBrain（MSE: 0.122, RSA: 0.504, CKA: 0.565）
    - 参数格式-英文：RoboBrain（RSA: 0.780, CKA: 0.849）
    - 言语格式-中文：Mimo-VL（MSE: 0.135）
@@ -278,7 +375,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 3. **提示词影响**：言语格式在英文条件下普遍降低MSE，中文条件下参数格式Jaccard更优
 
-4. **模型进化**：Qwen系列VLA训练在英文条件下显著提升（RSA、CKA持续提升），Mimo系列VLM训练效果更优但VLA回升不一致；Jaccard在Qwen系列VLA提升（中文0.154→0.250），Mimo系列VLA回升（中文0.273→0.188→0.333）
+4. **模型进化**：Qwen系列VLA训练在英文条件下显著提升（RSA、CKA持续提升），Mimo系列VLM训练效果更优但VLA回升不一致
 
 5. **Jaccard偏低**：所有模型Jaccard<0.333，说明模型与人类维度选择存在较大差异
 
