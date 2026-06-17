@@ -275,6 +275,8 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 ### 一、参数格式-中文条件
 
+![Param-CN](presentation/figures/fig5_param-cn.png)
+
 **讨论**：
 - **MSE**：RoboBrain最优（0.122），Mimo-VL次之（0.155），Qwen2.5-VL最差（0.233）
 - **RSA**：RoboBrain最优（0.504），Qwen2.5次之（0.147），Qwen2.5-VL最差（-0.528）
@@ -284,6 +286,8 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 ---
 
 ### 二、参数格式-英文条件
+
+![Param-EN](presentation/figures/fig5_param-en.png)
 
 **讨论**：
 - **MSE**：Mimo-VL最优（0.171），RoboBrain次之（0.185），Qwen2.5最差（0.239）
@@ -295,6 +299,8 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 ### 三、言语格式-中文条件
 
+![Verb-CN](presentation/figures/fig5_verb-cn.png)
+
 **讨论**：
 - **MSE**：Mimo-VL最优（0.135），Qwen2.5次之（0.150），Mimo-7B最差（0.197）
 - **RSA**：Mimo-7B最优（0.464），Qwen2.5-VL次之（0.152），RoboBrain最差（-0.201）
@@ -304,6 +310,8 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 ---
 
 ### 四、言语格式-英文条件
+
+![Verb-EN](presentation/figures/fig5_verb-en.png)
 
 **讨论**：
 - **MSE**：Qwen2.5最优（0.071），RoboBrain次之（0.072），Mimo-7B最差（0.175）
