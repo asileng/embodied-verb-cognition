@@ -2,7 +2,13 @@
 
 Probing  large model's ability on **Physical Action Verb Synonyms disambiguation(PAVSD)**:
 
-1: Linguistics and cognitive scientists have proved that PA-verb synonyms disambiguation is an **embodied** and **culture sensitive**  task, it relies on **Verb-Paramaters mapping**, and **can't be solved well by corpus based methods**.
+1: Linguistics and cognitive scientists have proved that PA-verb synonyms disambiguation relies on **Verb-Paramaters mapping**, and **can't be solved well by corpus based methods**.
+
+For example, throw, pitch share similar meaninng and trajectory. 
+
+Linguisticsts prove that, we differentiate pitch and throw, not by its 常见搭配组合, but through 运动参数: 手部高度，力度，水平方向，垂直轨迹.
+
+显然，这依赖具身的本体感觉和文化经验。
 
 2: This makes the task an interesting challenge towards large models. Especially raising the question: can visual and action reinforced learning improves LMs ability to build such Verb-Parameters mapping, thus reaching alignment with human?
 
@@ -11,8 +17,6 @@ Probing  large model's ability on **Physical Action Verb Synonyms disambiguation
 4: We gathered MSE, RSA, CKA and jaccard similarity to reflect model's performance across two languages and output format.
 
 5: Research shows that all models performs rather bad on the tasks.
-
-6:
 
 .
 
@@ -260,7 +264,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 ## 实验结论
 
-详细数据表格请查看 [EXPERIMENT_TABLES.md](EXPERIMENT_TABLES.md)
+
 
 ### 总体表现
 
