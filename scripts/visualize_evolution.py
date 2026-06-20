@@ -1,6 +1,7 @@
 """
 模型进化折线图
 每个系列（Qwen/Mimo）在4种条件下，4个指标的变化趋势
+线条样式：蓝色=英文，红色=中文，实线=参数格式，虚线=言语格式
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,8 +19,14 @@ plt.rcParams['ytick.major.width'] = 0.8
 
 stages = ['LLM', 'VLM', 'VLA']
 conditions = ['Param-CN', 'Param-EN', 'Verb-CN', 'Verb-EN']
-cond_colors = {'Param-CN': '#4C72B0', 'Param-EN': '#55A868', 'Verb-CN': '#C44E52', 'Verb-EN': '#8172B2'}
-cond_markers = {'Param-CN': 'o', 'Param-EN': 's', 'Verb-CN': '^', 'Verb-EN': 'D'}
+
+# 颜色和样式：蓝色=英文，红色=中文，实线=参数格式，虚线=言语格式
+cond_styles = {
+    'Param-CN': {'color': '#C44E52', 'linestyle': '-', 'marker': 'o', 'label': 'Param-CN'},
+    'Param-EN': {'color': '#4C72B0', 'linestyle': '-', 'marker': 's', 'label': 'Param-EN'},
+    'Verb-CN': {'color': '#C44E52', 'linestyle': '--', 'marker': '^', 'label': 'Verb-CN'},
+    'Verb-EN': {'color': '#4C72B0', 'linestyle': '--', 'marker': 'D', 'label': 'Verb-EN'},
+}
 metrics = ['MSE', 'RSA', 'CKA', 'Jaccard']
 
 # Qwen系列数据
@@ -90,8 +97,10 @@ for idx, metric in enumerate(metrics):
 
     for cond in conditions:
         values = qwen_data[metric][cond]
-        ax.plot(stages, values, marker=cond_markers[cond], label=cond,
-                color=cond_colors[cond], linewidth=2, markersize=8)
+        style = cond_styles[cond]
+        ax.plot(stages, values, marker=style['marker'], label=style['label'],
+                color=style['color'], linestyle=style['linestyle'],
+                linewidth=2, markersize=8)
 
     ax.set_xlabel('Training Stage', fontsize=11)
     ax.set_ylabel(metric, fontsize=11)
@@ -121,8 +130,10 @@ for idx, metric in enumerate(metrics):
 
     for cond in conditions:
         values = mimo_data[metric][cond]
-        ax.plot(stages, values, marker=cond_markers[cond], label=cond,
-                color=cond_colors[cond], linewidth=2, markersize=8)
+        style = cond_styles[cond]
+        ax.plot(stages, values, marker=style['marker'], label=style['label'],
+                color=style['color'], linestyle=style['linestyle'],
+                linewidth=2, markersize=8)
 
     ax.set_xlabel('Training Stage', fontsize=11)
     ax.set_ylabel(metric, fontsize=11)
