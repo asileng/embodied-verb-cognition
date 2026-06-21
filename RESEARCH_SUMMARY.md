@@ -270,50 +270,40 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 ![Overview](presentation/figures/fig1_overview.png)
 
-上图展示了6个模型在4种条件下（参数-中文、参数-英文、言语-中文、言语-英文）的4个指标表现。
+上图展示了6个模型在4种条件下（参数-中文、参数-英文、言语-中文、言语-英文）的3个指标表现（MSE、RSA、Jaccard），以及维度相关性热力图。
 
 ---
 
 ### 一、参数格式-中文条件
 
-![Param-CN](presentation/figures/fig5_param-cn.png)
+![Param-CN](presentation/figures/fig5_param_cn.png)
 
-**维度相关性热力图**：
-
-![Dimension Correlation ZH](presentation/figures/fig6a_dimension_corr_zh.png)
-
-上图展示了6个模型的5个维度与人类5个维度之间的Pearson相关系数。红色表示正相关，蓝色表示负相关，白色（nan）表示模型在该维度上是常数，无法计算相关。
+上图展示了6个模型在参数格式-中文条件下的MSE、RSA、维度相关性热力图和Jaccard。热力图显示每个模型的5个维度与人类对应维度的Pearson相关系数。
 
 **讨论**：
 
 - **MSE**：RoboBrain最优（0.122），Mimo-VL次之（0.155），Qwen2.5-VL最差（0.233）
 - **RSA**：RoboBrain最优（0.504），Qwen2.5次之（0.147），Qwen2.5-VL最差（-0.528）
-- **CKA**：RoboBrain最优（0.565），Mimo-VL和Qwen2.5接近（0.389/0.387），Mimo-7B最差（0.073）
 - **Jaccard**：Mimo-embodied最优（0.333），RoboBrain次之（0.250），Mimo-VL和Qwen2.5-VL最差（0.154/0.188）
-- **维度相关**：RoboBrain在ARM维度上与人类显著相关（r=0.89），Mimo-emb在FORCE维度上相关较高（r=0.80）
+- **维度相关**：Mimo-VL在HAND和HD维度上相关较高（0.815, 0.794），Mimo-emb在ARM维度上是负相关（-0.703）
 
 ---
 
 ### 二、参数格式-英文条件
 
-![Param-EN](presentation/figures/fig5_param-en.png)
-
-**维度相关性热力图**：
-
-![Dimension Correlation EN](presentation/figures/fig6b_dimension_corr_en.png)
+![Param-EN](presentation/figures/fig5_param_en.png)
 
 **讨论**：
 
 - **MSE**：Mimo-VL最优（0.171），RoboBrain次之（0.185），Qwen2.5最差（0.239）
 - **RSA**：RoboBrain最优（0.780），Qwen2.5-VL次之（0.513），Qwen2.5最差（-0.242）
-- **CKA**：RoboBrain最优（0.849），Qwen2.5-VL次之（0.677），Mimo-7B最差（0.223）
 - **Jaccard**：RoboBrain和Qwen2.5-VL并列最优（0.267），Qwen2.5最差（0.000）
 
 ---
 
 ### 三、言语格式-中文条件
 
-![Verb-CN](presentation/figures/fig5_verb-cn.png)
+![Verb-CN](presentation/figures/fig5_verb_cn.png)
 
 **讨论**：
 
@@ -326,7 +316,7 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 ### 四、言语格式-英文条件
 
-![Verb-EN](presentation/figures/fig5_verb-en.png)
+![Verb-EN](presentation/figures/fig5_verb_en.png)
 
 **讨论**：
 
