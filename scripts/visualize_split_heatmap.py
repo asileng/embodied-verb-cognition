@@ -191,50 +191,40 @@ corr_verb_en = get_corr_matrix('en', 'task2')
 # 图2：语言影响（参数格式：中文红色 vs 英文紫色）
 # ============================================================
 
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-# 左图：参数格式语言对比
-ax1 = axes[0]
+# 左上：参数格式语言对比
+ax1 = axes[0, 0]
 colormap_cn = plt.cm.Reds
 colormap_en = plt.cm.Purples
 draw_split_heatmap(ax1, corr_param_cn, corr_param_en,
                    'Language Effect (Param Format)', 'Chinese (Red)', 'English (Purple)',
                    colormap_cn, colormap_en)
 
-# 右图：言语格式语言对比
-ax2 = axes[1]
+# 右上：言语格式语言对比
+ax2 = axes[0, 1]
 draw_split_heatmap(ax2, corr_verb_cn, corr_verb_en,
                    'Language Effect (Verb Format)', 'Chinese (Red)', 'English (Purple)',
                    colormap_cn, colormap_en)
 
-plt.tight_layout()
-plt.savefig('D:/task/科研/LLM-evaluation/具神认知/embodied-verb-cognition/presentation/figures/fig2_language_effect.png', dpi=300, bbox_inches='tight')
-plt.close()
-print('Saved: fig2_language_effect.png')
-
-# ============================================================
-# 图3：格式影响（中文：参数蓝色 vs 言语绿色）
-# ============================================================
-
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-# 左图：中文条件下格式对比
-ax1 = axes[0]
+# 左下：中文条件下格式对比
+ax3 = axes[1, 0]
 colormap_param = plt.cm.Blues
 colormap_verb = plt.cm.Greens
-draw_split_heatmap(ax1, corr_param_cn, corr_verb_cn,
+draw_split_heatmap(ax3, corr_param_cn, corr_verb_cn,
                    'Prompt Effect (Chinese)', 'Param Format (Blue)', 'Verb Format (Green)',
                    colormap_param, colormap_verb)
 
-# 右图：英文条件下格式对比
-ax2 = axes[1]
-draw_split_heatmap(ax2, corr_param_en, corr_verb_en,
+# 右下：英文条件下格式对比
+ax4 = axes[1, 1]
+draw_split_heatmap(ax4, corr_param_en, corr_verb_en,
                    'Prompt Effect (English)', 'Param Format (Blue)', 'Verb Format (Green)',
                    colormap_param, colormap_verb)
 
 plt.tight_layout()
+plt.savefig('D:/task/科研/LLM-evaluation/具神认知/embodied-verb-cognition/presentation/figures/fig2_language_effect.png', dpi=300, bbox_inches='tight')
 plt.savefig('D:/task/科研/LLM-evaluation/具神认知/embodied-verb-cognition/presentation/figures/fig3_prompt_effect.png', dpi=300, bbox_inches='tight')
 plt.close()
-print('Saved: fig3_prompt_effect.png')
+print('Saved: fig2_language_effect.png and fig3_prompt_effect.png')
 
 print('\nDone!')
