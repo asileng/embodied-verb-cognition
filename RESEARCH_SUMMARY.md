@@ -309,7 +309,6 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 - **MSE**：Mimo-VL最优（0.135），Qwen2.5次之（0.150），Mimo-7B最差（0.197）
 - **RSA**：Mimo-7B最优（0.464），Qwen2.5-VL次之（0.152），RoboBrain最差（-0.201）
-- **CKA**：Mimo-7B最优（0.485），Qwen2.5-VL次之（0.373），RoboBrain最差（0.168）
 - **Jaccard**：Mimo-embodied最优（0.214），RoboBrain次之（0.154），Mimo-VL和Qwen2.5-VL最差（0.000）
 
 ---
@@ -322,7 +321,6 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 - **MSE**：Qwen2.5最优（0.071），RoboBrain次之（0.072），Mimo-7B最差（0.175）
 - **RSA**：Qwen2.5最优（0.622），Qwen2.5-VL次之（0.465），RoboBrain最差（-0.124）
-- **CKA**：Qwen2.5-VL最优（0.640），Qwen2.5次之（0.618），Mimo-VL最差（0.366）
 - **Jaccard**：Qwen2.5-VL最优（0.308），Mimo-7B次之（0.231），RoboBrain最差（0.133）
 
 ---
@@ -337,7 +335,6 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 - **MSE**：参数格式下5/6模型中文更优（正值），言语格式下所有模型英文更优（负值）
 - **RSA**：因模型和格式而异，无一致趋势
-- **CKA**：所有模型英文更优（负值），参数格式差异更大
 - **Jaccard**：参数格式下4/6模型中文更优（正值），言语格式下4/6模型英文更优（负值）
 
 ---
@@ -352,7 +349,6 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 - **MSE**：中文条件下4/6模型言语格式更优（负值），英文条件下所有模型言语格式更优（负值）
 - **RSA**：因模型而异，无一致趋势
-- **CKA**：中文条件下3/6模型参数格式更优（正值），英文条件下3/6模型言语格式更优（负值）
 - **Jaccard**：中文条件下所有模型参数格式更优（正值），英文条件下4/6模型言语格式更优（负值）
 
 ---
@@ -363,19 +359,19 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 ![Qwen Evolution](presentation/figures/fig4a_qwen_evolution.png)
 
-**参数格式-中文**：VLA在MSE和CKA上最优，RSA从VLM回升
-**参数格式-英文**：MSE持续下降，RSA和CKA持续提升，Jaccard在VLM提升后持平
-**言语格式-中文**：LLM在MSE和RSA上最优，VLM在CKA上最优，Jaccard在VLA提升
-**言语格式-英文**：LLM在MSE和RSA上最优，VLM在CKA和Jaccard上最优
+**参数格式-中文**：VLA在MSE上最优，RSA从VLM回升
+**参数格式-英文**：MSE持续下降，RSA持续提升，Jaccard在VLM提升后持平
+**言语格式-中文**：LLM在MSE和RSA上最优，Jaccard在VLA提升
+**言语格式-英文**：LLM在MSE和RSA上最优，VLM在Jaccard上最优
 
 #### Mimo系列
 
 ![Mimo Evolution](presentation/figures/fig4b_mimo_evolution.png)
 
-**参数格式-中文**：VLM在MSE和CKA上最优，RSA持续提升，Jaccard在VLA回升
-**参数格式-英文**：VLM在MSE和CKA上最优，RSA在VLA回升，Jaccard在VLA提升
-**言语格式-中文**：VLM在MSE上最优，LLM在RSA和CKA上最优，Jaccard在VLA提升
-**言语格式-英文**：VLM在MSE和CKA上最优，VLA在RSA上最优，Jaccard在LLM最优
+**参数格式-中文**：VLM在MSE上最优，RSA持续提升，Jaccard在VLA回升
+**参数格式-英文**：VLM在MSE上最优，RSA在VLA回升，Jaccard在VLA提升
+**言语格式-中文**：VLM在MSE上最优，LLM在RSA上最优，Jaccard在VLA提升
+**言语格式-英文**：VLM在MSE上最优，VLA在RSA上最优，Jaccard在LLM最优
 
 ---
 
@@ -383,12 +379,12 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 1. **最优组合**：
    
-   - 参数格式-中文：RoboBrain（MSE: 0.122, RSA: 0.504, CKA: 0.565）
-   - 参数格式-英文：RoboBrain（RSA: 0.780, CKA: 0.849）
+   - 参数格式-中文：RoboBrain（MSE: 0.122, RSA: 0.504）
+   - 参数格式-英文：RoboBrain（RSA: 0.780）
    - 言语格式-中文：Mimo-VL（MSE: 0.135）
    - 言语格式-英文：Qwen2.5（MSE: 0.071, RSA: 0.622）
 
-2. **语言影响**：参数格式下中文MSE更优，言语格式下英文MSE更优；CKA普遍英文更优
+2. **语言影响**：参数格式下中文MSE更优，言语格式下英文MSE更优
 
 3. **提示词影响**：言语格式在英文条件下普遍降低MSE，中文条件下参数格式Jaccard更优
 
