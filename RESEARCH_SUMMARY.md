@@ -270,7 +270,11 @@ $$J_{avg} = \frac{1}{15} \sum_{i<j} J(S_{ij}^{human}, S_{ij}^{model})$$
 
 ![Overview](presentation/figures/fig1_overview.png)
 
-上图展示了6个模型在4种条件下（参数-中文、参数-英文、言语-中文、言语-英文）的3个指标表现（MSE、RSA、Jaccard），以及维度相关性热力图。
+上图展示了6个模型在4种条件下（参数-中文、参数-英文、言语-中文、言语-英文）的3个指标表现（MSE、RSA、Jaccard）。
+
+![Dimension Correlation](presentation/figures/fig5_conditions.png)
+
+上图展示了4种条件下的维度相关性热力图。每个热力图显示6个模型的5个维度与人类对应维度的Pearson相关系数。红色表示正相关，蓝色表示负相关，白色（nan）表示模型在该维度上是常数。
 
 ---
 

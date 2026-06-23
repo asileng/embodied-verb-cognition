@@ -1,11 +1,9 @@
 """
-对角线分割热力图
-- 语言影响图：参数格式中文相关性（红色）vs 英文相关性（紫色）
-- 格式影响图：中文条件下参数格式相关性（红色）vs 言语格式相关性（紫色）
+fig1_overview：3个指标 + 维度相关性热力图
 """
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import numpy as np
+import matplotlib.gridspec as gridspec
 from scipy.stats import pearsonr
 import json
 import glob
@@ -14,10 +12,11 @@ plt.rcParams['font.family'] = 'Arial'
 plt.rcParams['font.size'] = 10
 plt.rcParams['axes.linewidth'] = 0.8
 
-dims = ['FORCE', 'HAND', 'ARM', 'HD', 'VD']
 model_names = ['Mimo-7B', 'Mimo-VL', 'Mimo-emb', 'Qwen2.5', 'Qwen2.5-VL', 'RoboBrain']
 model_keys = ['Mimo-7B-SFT', 'Mimo-VL-7B-SFT', 'Mimo-embodied-7B',
               'Qwen2.5-7B-Instruct', 'Qwen2.5-VL-7B-Instruct', 'RoboBrain2.0-7B']
+dims = ['FORCE', 'HAND', 'ARM', 'HD', 'VD']
+conditions = ['Param-CN', 'Param-EN', 'Verb-CN', 'Verb-EN']
 
 human_data = {
     'zh': {
@@ -122,117 +121,122 @@ def get_corr_matrix(lang, task):
             corr_data[i, j] = corr
     return corr_data
 
-def value_to_color(val, colormap, vmin=-1, vmax=1):
-    """将值映射到颜色"""
-    if np.isnan(val):
-        return (0.9, 0.9, 0.9, 1.0)  # 浅灰色
-    norm_val = (val - vmin) / (vmax - vmin)
-    norm_val = max(0, min(1, norm_val))
-    return colormap(norm_val)
+# 数据
+data = {
+    'Mimo-7B-SFT': {
+        'Param-CN': {'MSE': 0.190, 'RSA': -0.442, 'Jaccard': 0.273},
+        'Param-EN': {'MSE': 0.235, 'RSA': -0.043, 'Jaccard': 0.083},
+        'Verb-CN': {'MSE': 0.197, 'RSA': 0.464, 'Jaccard': 0.077},
+        'Verb-EN': {'MSE': 0.175, 'RSA': 0.152, 'Jaccard': 0.231},
+    },
+    'Mimo-VL-7B-SFT': {
+        'Param-CN': {'MSE': 0.155, 'RSA': -0.178, 'Jaccard': 0.188},
+        'Param-EN': {'MSE': 0.171, 'RSA': -0.132, 'Jaccard': 0.071},
+        'Verb-CN': {'MSE': 0.135, 'RSA': -0.027, 'Jaccard': 0.000},
+        'Verb-EN': {'MSE': 0.104, 'RSA': 0.076, 'Jaccard': 0.167},
+    },
+    'Mimo-embodied-7B': {
+        'Param-CN': {'MSE': 0.213, 'RSA': 0.066, 'Jaccard': 0.333},
+        'Param-EN': {'MSE': 0.218, 'RSA': 0.014, 'Jaccard': 0.214},
+        'Verb-CN': {'MSE': 0.189, 'RSA': 0.121, 'Jaccard': 0.214},
+        'Verb-EN': {'MSE': 0.113, 'RSA': 0.205, 'Jaccard': 0.167},
+    },
+    'Qwen2.5-7B-Instruct': {
+        'Param-CN': {'MSE': 0.225, 'RSA': 0.147, 'Jaccard': 0.154},
+        'Param-EN': {'MSE': 0.239, 'RSA': -0.242, 'Jaccard': 0.000},
+        'Verb-CN': {'MSE': 0.150, 'RSA': 0.138, 'Jaccard': 0.077},
+        'Verb-EN': {'MSE': 0.071, 'RSA': 0.622, 'Jaccard': 0.182},
+    },
+    'Qwen2.5-VL-7B-Instruct': {
+        'Param-CN': {'MSE': 0.233, 'RSA': -0.528, 'Jaccard': 0.154},
+        'Param-EN': {'MSE': 0.201, 'RSA': 0.513, 'Jaccard': 0.267},
+        'Verb-CN': {'MSE': 0.180, 'RSA': 0.152, 'Jaccard': 0.000},
+        'Verb-EN': {'MSE': 0.075, 'RSA': 0.465, 'Jaccard': 0.308},
+    },
+    'RoboBrain2.0-7B': {
+        'Param-CN': {'MSE': 0.122, 'RSA': 0.504, 'Jaccard': 0.250},
+        'Param-EN': {'MSE': 0.185, 'RSA': 0.780, 'Jaccard': 0.267},
+        'Verb-CN': {'MSE': 0.163, 'RSA': -0.201, 'Jaccard': 0.154},
+        'Verb-EN': {'MSE': 0.072, 'RSA': -0.124, 'Jaccard': 0.133},
+    },
+}
 
-def draw_split_heatmap(ax, data_low, data_high, title, label_low, label_high,
-                       colormap_low, colormap_high, vmin=-1, vmax=1):
-    """绘制对角线分割热力图，相关系数更高的三角用黑边框"""
-    n_rows, n_cols = data_low.shape
-
-    for i in range(n_rows):
-        for j in range(n_cols):
-            val_low = data_low[i, j]
-            val_high = data_high[i, j]
-
-            # 判断哪个三角的相关系数更高（用绝对值比较）
-            low_is_higher = (not np.isnan(val_low)) and (np.isnan(val_high) or abs(val_low) >= abs(val_high))
-
-            # 下三角（左下）- 使用data_low
-            color_low = value_to_color(val_low, colormap_low, vmin, vmax)
-            border_low = 'black' if low_is_higher else 'white'
-            lw_low = 2.0 if low_is_higher else 0.5
-            triangle_low = plt.Polygon([[j, n_rows-1-i], [j+1, n_rows-1-i], [j, n_rows-i]],
-                                       facecolor=color_low, edgecolor=border_low, linewidth=lw_low)
-            ax.add_patch(triangle_low)
-
-            # 上三角（右上）- 使用data_high
-            color_high = value_to_color(val_high, colormap_high, vmin, vmax)
-            border_high = 'black' if not low_is_higher else 'white'
-            lw_high = 2.0 if not low_is_higher else 0.5
-            triangle_high = plt.Polygon([[j+1, n_rows-1-i], [j+1, n_rows-i], [j, n_rows-i]],
-                                        facecolor=color_high, edgecolor=border_high, linewidth=lw_high)
-            ax.add_patch(triangle_high)
-
-            # 添加数值标注
-            if not np.isnan(val_low):
-                ax.text(j+0.25, n_rows-0.5-i, f'{val_low:.2f}', ha='center', va='center',
-                       fontsize=5, color='white' if abs(val_low) > 0.5 else 'black')
-            if not np.isnan(val_high):
-                ax.text(j+0.75, n_rows-0.5-i, f'{val_high:.2f}', ha='center', va='center',
-                       fontsize=5, color='white' if abs(val_high) > 0.5 else 'black')
-
-    ax.set_xlim(0, n_cols)
-    ax.set_ylim(0, n_rows)
-    ax.set_xticks([0.5, 1.5, 2.5, 3.5, 4.5, 5.5])
-    ax.set_xticklabels(model_names, rotation=45, ha='right', fontsize=7)
-    ax.set_yticks([0.5, 1.5, 2.5, 3.5, 4.5])
-    ax.set_yticklabels(dims[::-1], fontsize=8)
-    ax.set_xlabel('Model', fontsize=9)
-    ax.set_ylabel('Dimension', fontsize=9)
-    ax.set_title(title, fontweight='bold', fontsize=10)
-
-    # 添加图例
-    from matplotlib.patches import Patch
-    legend_elements = [Patch(facecolor=colormap_low(0.7), label=label_low),
-                       Patch(facecolor=colormap_high(0.7), label=label_high)]
-    ax.legend(handles=legend_elements, loc='upper right', fontsize=7)
-
-# ============================================================
-# 获取相关矩阵
-# ============================================================
-
-# 参数格式
+# 获取中文参数格式的相关矩阵
 corr_param_cn = get_corr_matrix('zh', 'task1')
-corr_param_en = get_corr_matrix('en', 'task1')
-
-# 言语格式
-corr_verb_cn = get_corr_matrix('zh', 'task2')
-corr_verb_en = get_corr_matrix('en', 'task2')
 
 # ============================================================
-# 图2：语言影响（参数格式：中文红色 vs 英文紫色）
+# fig1_overview：3个指标 + 维度相关性热力图
 # ============================================================
 
-fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+fig = plt.figure(figsize=(15, 10))
+gs = gridspec.GridSpec(2, 2, hspace=0.4, wspace=0.35)
 
-# 左上：参数格式语言对比
-ax1 = axes[0, 0]
-colormap_cn = plt.cm.Reds
-colormap_en = plt.cm.Purples
-draw_split_heatmap(ax1, corr_param_cn, corr_param_en,
-                   'Language Effect (Param Format)', 'Chinese (Red)', 'English (Purple)',
-                   colormap_cn, colormap_en)
+x = np.arange(len(model_names))
+width = 0.2
+colors = ['#4C72B0', '#55A868', '#C44E52', '#8172B2']
 
-# 右上：言语格式语言对比
-ax2 = axes[0, 1]
-draw_split_heatmap(ax2, corr_verb_cn, corr_verb_en,
-                   'Language Effect (Verb Format)', 'Chinese (Red)', 'English (Purple)',
-                   colormap_cn, colormap_en)
+# MSE
+ax1 = fig.add_subplot(gs[0, 0])
+for i, cond in enumerate(conditions):
+    values = [data[model][cond]['MSE'] for model in model_keys]
+    ax1.bar(x + i * width, values, width, label=cond, color=colors[i])
+ax1.set_xlabel('Model')
+ax1.set_ylabel('MSE')
+ax1.set_title('MSE', fontweight='bold')
+ax1.set_xticks(x + width * 1.5)
+ax1.set_xticklabels(model_names, rotation=45, ha='right', fontsize=8)
+ax1.legend(fontsize=7)
+ax1.spines['top'].set_visible(False)
+ax1.spines['right'].set_visible(False)
 
-# 左下：中文条件下格式对比
-ax3 = axes[1, 0]
-colormap_param = plt.cm.Blues
-colormap_verb = plt.cm.Greens
-draw_split_heatmap(ax3, corr_param_cn, corr_verb_cn,
-                   'Prompt Effect (Chinese)', 'Param Format (Blue)', 'Verb Format (Green)',
-                   colormap_param, colormap_verb)
+# RSA
+ax2 = fig.add_subplot(gs[0, 1])
+for i, cond in enumerate(conditions):
+    values = [data[model][cond]['RSA'] for model in model_keys]
+    ax2.bar(x + i * width, values, width, label=cond, color=colors[i])
+ax2.set_xlabel('Model')
+ax2.set_ylabel('RSA')
+ax2.set_title('RSA', fontweight='bold')
+ax2.set_xticks(x + width * 1.5)
+ax2.set_xticklabels(model_names, rotation=45, ha='right', fontsize=8)
+ax2.legend(fontsize=7)
+ax2.axhline(y=0, color='black', linewidth=0.5)
+ax2.spines['top'].set_visible(False)
+ax2.spines['right'].set_visible(False)
 
-# 右下：英文条件下格式对比
-ax4 = axes[1, 1]
-draw_split_heatmap(ax4, corr_param_en, corr_verb_en,
-                   'Prompt Effect (English)', 'Param Format (Blue)', 'Verb Format (Green)',
-                   colormap_param, colormap_verb)
+# 维度相关性热力图
+ax3 = fig.add_subplot(gs[1, 0])
+im = ax3.imshow(corr_param_cn, cmap='RdBu_r', vmin=-1, vmax=1, aspect='auto')
+ax3.set_xticks(range(6))
+ax3.set_yticks(range(5))
+ax3.set_xticklabels(model_names, rotation=45, ha='right', fontsize=8)
+ax3.set_yticklabels(dims, fontsize=9)
+ax3.set_xlabel('Model')
+ax3.set_ylabel('Dimension')
+ax3.set_title('Dimension Correlation (Param-CN)', fontweight='bold')
+for i in range(5):
+    for j in range(6):
+        val = corr_param_cn[i, j]
+        if not np.isnan(val):
+            color = 'white' if abs(val) > 0.5 else 'black'
+            ax3.text(j, i, f'{val:.2f}', ha='center', va='center', fontsize=7, color=color)
+plt.colorbar(im, ax=ax3, shrink=0.8)
 
-plt.tight_layout()
-plt.savefig('D:/task/科研/LLM-evaluation/具神认知/embodied-verb-cognition/presentation/figures/fig2_language_effect.png', dpi=300, bbox_inches='tight')
-plt.savefig('D:/task/科研/LLM-evaluation/具神认知/embodied-verb-cognition/presentation/figures/fig3_prompt_effect.png', dpi=300, bbox_inches='tight')
+# Jaccard
+ax4 = fig.add_subplot(gs[1, 1])
+for i, cond in enumerate(conditions):
+    values = [data[model][cond]['Jaccard'] for model in model_keys]
+    ax4.bar(x + i * width, values, width, label=cond, color=colors[i])
+ax4.set_xlabel('Model')
+ax4.set_ylabel('Jaccard')
+ax4.set_title('Jaccard', fontweight='bold')
+ax4.set_xticks(x + width * 1.5)
+ax4.set_xticklabels(model_names, rotation=45, ha='right', fontsize=8)
+ax4.legend(fontsize=7)
+ax4.spines['top'].set_visible(False)
+ax4.spines['right'].set_visible(False)
+
+plt.suptitle('Overview: Model Performance Across Conditions', fontsize=14, fontweight='bold', y=1.02)
+plt.savefig('D:/task/科研/LLM-evaluation/具神认知/embodied-verb-cognition/presentation/figures/fig1_overview.png', dpi=300, bbox_inches='tight')
 plt.close()
-print('Saved: fig2_language_effect.png and fig3_prompt_effect.png')
-
-print('\nDone!')
+print('Saved: fig1_overview.png')
