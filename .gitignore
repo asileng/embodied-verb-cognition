@@ -42,6 +42,7 @@ pilot_results/
 *.tmp
 *.bak
 *.backup
+.~lock.*#
 
 # Jupyter
 .ipynb_checkpoints/
